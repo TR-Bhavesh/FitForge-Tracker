@@ -5,18 +5,28 @@ document.addEventListener('DOMContentLoaded', function() {
     loadDashboardData();
     drawVitruvianBody();
     displayBodyStats();
+
+    // Mobile tooltip toggle (tap to show/hide)
+    document.querySelectorAll('.stat-row.has-tooltip').forEach(function(row) {
+        row.addEventListener('click', function() {
+            var tip = row.querySelector('.stat-tooltip');
+            if (!tip) return;
+            var isOpen = tip.style.display === 'block';
+            document.querySelectorAll('.stat-tooltip').forEach(function(t) { t.style.display = ''; });
+            if (!isOpen) tip.style.display = 'block';
+        });
+    });
 });
 
 /* ════════════════════════════════════════════════
-   3D ANATOMICAL BODY — Three.js
-   Realistic humanoid built from smooth geometry
-   Gender-aware · BMI-responsive · Interactive orbit
+   3D ANATOMICAL BODY — Three.js  (LatheGeometry)
+   Smooth revolution surfaces · Gender-aware · BMI-responsive
    ════════════════════════════════════════════════ */
 let bodyScene, bodyCamera, bodyRenderer, bodyControls, bodyModel;
 
 function drawVitruvianBody() {
     const container = document.getElementById('bodyDisplayContainer');
-    const canvas = document.getElementById('bodyCanvas3D');
+    const canvas    = document.getElementById('bodyCanvas3D');
     if (!container || !canvas) return;
 
     const gender   = currentUser.gender || 'male';
@@ -26,7 +36,6 @@ function drawVitruvianBody() {
     const bmi      = calculateBMIValue(weight, heightIn);
     const isMale   = gender !== 'female';
 
-    // BMI → body scale factor
     let fatScale;
     if (bmi < 18.5)      fatScale = 0.82;
     else if (bmi < 22)   fatScale = 0.90;
@@ -35,277 +44,216 @@ function drawVitruvianBody() {
     else if (bmi < 32)   fatScale = 1.26;
     else                  fatScale = 1.42;
 
-    // Cleanup previous render
-    if (bodyRenderer) {
-        bodyRenderer.dispose();
-        if (bodyControls) bodyControls.dispose();
-        bodyControls = null;
-    }
+    if (bodyRenderer) { bodyRenderer.dispose(); if (bodyControls) bodyControls.dispose(); bodyControls = null; }
 
-    // Scene
     bodyScene = new THREE.Scene();
 
-    // Camera
-    const w = container.clientWidth || 400;
+    const w = container.clientWidth  || 400;
     const h = container.clientHeight || 520;
-    bodyCamera = new THREE.PerspectiveCamera(32, w / h, 0.1, 100);
-    bodyCamera.position.set(0, 1.0, 5.5);
+    bodyCamera = new THREE.PerspectiveCamera(30, w / h, 0.1, 100);
+    bodyCamera.position.set(0, 0.9, 6);
 
-    // Renderer
     bodyRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     bodyRenderer.setSize(w, h);
     bodyRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     bodyRenderer.setClearColor(0x000000, 0);
     bodyRenderer.toneMapping = THREE.ACESFilmicToneMapping;
-    bodyRenderer.toneMappingExposure = 1.1;
+    bodyRenderer.toneMappingExposure = 1.15;
 
-    // Orbit controls (with fallback if OrbitControls CDN fails)
     try {
         bodyControls = new THREE.OrbitControls(bodyCamera, canvas);
-        bodyControls.enableDamping = true;
-        bodyControls.dampingFactor = 0.08;
-        bodyControls.enablePan = false;
-        bodyControls.minDistance = 3;
-        bodyControls.maxDistance = 10;
+        bodyControls.enableDamping = true; bodyControls.dampingFactor = 0.08;
+        bodyControls.enablePan = false; bodyControls.minDistance = 3; bodyControls.maxDistance = 10;
         bodyControls.target.set(0, 0.9, 0);
-    } catch (e) {
-        bodyControls = null;
-    }
+    } catch(e) { bodyControls = null; }
 
     // Lighting
-    const amb = new THREE.AmbientLight(0xc8a55a, 0.5);
-    bodyScene.add(amb);
-    const key = new THREE.DirectionalLight(0xffeedd, 1.8);
-    key.position.set(3, 5, 4);
-    bodyScene.add(key);
-    const fill = new THREE.DirectionalLight(0x8899bb, 0.6);
-    fill.position.set(-3, 3, -2);
-    bodyScene.add(fill);
-    const rim = new THREE.DirectionalLight(0xc8a05a, 0.5);
-    rim.position.set(0, 2, -5);
-    bodyScene.add(rim);
-    const top = new THREE.DirectionalLight(0xffffff, 0.3);
-    top.position.set(0, 8, 0);
-    bodyScene.add(top);
+    bodyScene.add(new THREE.AmbientLight(0xffeedd, 0.55));
+    const keyL = new THREE.DirectionalLight(0xfff0dd, 1.6); keyL.position.set(3, 5, 4); bodyScene.add(keyL);
+    const fillL = new THREE.DirectionalLight(0x8899bb, 0.5); fillL.position.set(-3, 3, -2); bodyScene.add(fillL);
+    const rimL = new THREE.DirectionalLight(0xddb87a, 0.45); rimL.position.set(0, 2, -5); bodyScene.add(rimL);
+    const topL = new THREE.DirectionalLight(0xffffff, 0.25); topL.position.set(0, 8, 0); bodyScene.add(topL);
 
-    // Skin material — subsurface-look
+    // Materials
     const skinColor = isMale ? 0xd4a574 : 0xe0b090;
-    const skinMat = new THREE.MeshStandardMaterial({
-        color: skinColor,
-        roughness: 0.55,
-        metalness: 0.02,
-        emissive: skinColor,
-        emissiveIntensity: 0.04,
-    });
-    const darkMat = new THREE.MeshStandardMaterial({
-        color: 0x2a2e3a,
-        roughness: 0.7,
-        metalness: 0.0,
-    });
-    const hairColor = isMale ? 0x3a2a1a : 0x2a1a0a;
-    const hairMat = new THREE.MeshStandardMaterial({
-        color: hairColor,
-        roughness: 0.8,
-        metalness: 0.0,
-    });
+    const skin = new THREE.MeshStandardMaterial({ color: skinColor, roughness: 0.5, metalness: 0.02, emissive: skinColor, emissiveIntensity: 0.03 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x2a2e3a, roughness: 0.6 });
+    const hairMat = new THREE.MeshStandardMaterial({ color: isMale ? 0x3a2a1a : 0x2a1a0a, roughness: 0.75 });
+    const eyeMat  = new THREE.MeshStandardMaterial({ color: 0x191919, roughness: 0.3 });
 
-    // Build body group
     bodyModel = new THREE.Group();
+    const f = fatScale;
+    const sW = isMale ? 1.0 : 0.84;
+    const hW = isMale ? 1.0 : 1.16;
+    const wW = isMale ? 1.0 : 0.92;
+    const cW = isMale ? 1.10 : 1.0;
+    const aW = isMale ? 1.0 : 0.82;
 
-    // Helper: create capsule-like body part (elongated sphere)
-    function limb(rx, ry, rz, px, py, pz, rotX, rotZ) {
-        const geo = new THREE.SphereGeometry(1, 24, 16);
-        geo.scale(rx, ry, rz);
-        const mesh = new THREE.Mesh(geo, skinMat);
-        mesh.position.set(px, py, pz);
-        if (rotX) mesh.rotation.x = rotX;
-        if (rotZ) mesh.rotation.z = rotZ;
-        return mesh;
+    /* ── Helper: LatheGeometry body part ──
+       Takes an array of [radius, y] points, creates a smooth revolution surface */
+    function lathePart(profile, mat, px, py, pz, sx, sy, sz) {
+        const pts = profile.map(p => new THREE.Vector2(p[0], p[1]));
+        const geo = new THREE.LatheGeometry(pts, 32);
+        const m   = new THREE.Mesh(geo, mat || skin);
+        m.position.set(px || 0, py || 0, pz || 0);
+        if (sx || sy || sz) m.scale.set(sx || 1, sy || 1, sz || 1);
+        return m;
     }
 
-    // Gender body proportion adjustments
-    const sW = isMale ? 1.0 : 0.82;   // shoulders
-    const hW = isMale ? 1.0 : 1.18;   // hips
-    const wW = isMale ? 1.0 : 0.92;   // waist
-    const cW = isMale ? 1.12 : 1.0;   // chest prominence
-    const aW = isMale ? 1.0 : 0.80;   // arm thickness
-
-    const f = fatScale;
-
     // ═══ HEAD ═══
-    const head = limb(0.25, 0.30, 0.26, 0, 2.25, 0);
+    const headGeo = new THREE.SphereGeometry(0.26, 32, 24);
+    headGeo.scale(1, 1.18, 1.02);
+    const head = new THREE.Mesh(headGeo, skin);
+    head.position.set(0, 2.28, 0);
     bodyModel.add(head);
 
     // Hair
-    const hairGeo = new THREE.SphereGeometry(1, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55);
-    hairGeo.scale(0.265, 0.28, 0.27);
+    const hairGeo = new THREE.SphereGeometry(0.275, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.52);
     const hair = new THREE.Mesh(hairGeo, hairMat);
-    hair.position.set(0, 2.34, -0.01);
+    hair.position.set(0, 2.38, -0.01);
     bodyModel.add(hair);
     if (!isMale) {
-        // Longer hair sides
-        const hairSideGeo = new THREE.CylinderGeometry(0.06, 0.04, 0.6, 8);
-        [-1, 1].forEach(side => {
-            const hs = new THREE.Mesh(hairSideGeo, hairMat);
-            hs.position.set(side * 0.22, 2.05, -0.05);
-            hs.rotation.z = side * 0.15;
-            bodyModel.add(hs);
-        });
+        const hsg = new THREE.CylinderGeometry(0.055, 0.035, 0.65, 10);
+        [-1, 1].forEach(s => { const h2 = new THREE.Mesh(hsg, hairMat); h2.position.set(s*0.22, 2.05, -0.04); h2.rotation.z = s*0.12; bodyModel.add(h2); });
     }
 
-    // Eyes (simplified)
-    const eyeMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.3 });
-    [-1, 1].forEach(side => {
-        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), eyeMat);
-        eye.position.set(side * 0.085, 2.27, 0.22);
-        bodyModel.add(eye);
-    });
+    // Eyes
+    [-1,1].forEach(s => { const e = new THREE.Mesh(new THREE.SphereGeometry(0.028, 10, 8), eyeMat); e.position.set(s*0.09, 2.30, 0.22); bodyModel.add(e); });
 
-    // ═══ NECK ═══
-    const neck = limb(0.1 * f, 0.12, 0.09 * f, 0, 1.97, 0);
-    bodyModel.add(neck);
+    // ═══ NECK (smooth cylinder) ═══
+    const neckProf = [[0, 0], [0.09*f, 0], [0.10*f, 0.04], [0.10*f, 0.10], [0.09*f, 0.14], [0, 0.14]];
+    bodyModel.add(lathePart(neckProf, skin, 0, 1.88, 0));
 
-    // ═══ TORSO ═══
-    // Upper chest / trapezius zone
-    const upperChest = limb(0.42 * sW * f, 0.18, 0.22 * cW * f, 0, 1.82, 0);
-    bodyModel.add(upperChest);
+    // ═══ TORSO (single smooth lathe) ═══
+    const tw = 0.32 * sW * f;    // top width (shoulders)
+    const cWid = 0.34 * cW * f;  // chest
+    const rWid = 0.28 * wW * f;  // ribs
+    const waW  = 0.24 * wW * f;  // waist
+    const pWid = 0.30 * hW * f;  // pelvis
+    const torsoProfile = [
+        [0, 0],
+        [tw*0.7, 0.01],    // collar
+        [tw, 0.06],         // shoulder width
+        [cWid, 0.16],       // upper chest
+        [cWid*0.98, 0.28],  // mid chest
+        [rWid, 0.40],       // ribs
+        [waW, 0.52],        // waist (narrowest)
+        [waW*1.02, 0.58],   // lower abs
+        [pWid*0.9, 0.66],   // upper pelvis
+        [pWid, 0.72],       // hip widest
+        [pWid*0.85, 0.78],  // lower pelvis
+        [0, 0.78],
+    ];
+    bodyModel.add(lathePart(torsoProfile, skin, 0, 1.10, 0));
 
-    // Mid chest
-    const midChest = limb(0.40 * sW * f, 0.16, 0.20 * cW * f, 0, 1.65, 0);
-    bodyModel.add(midChest);
-
-    // Ribcage
-    const ribs = limb(0.35 * wW * f, 0.14, 0.18 * f, 0, 1.48, 0);
-    bodyModel.add(ribs);
-
-    // Waist / abdomen
-    const waist = limb(0.28 * wW * f, 0.14, 0.16 * f, 0, 1.32, 0);
-    bodyModel.add(waist);
-
-    // Pelvis / hips
-    const pelvis = limb(0.34 * hW * f, 0.16, 0.18 * f, 0, 1.14, 0);
-    bodyModel.add(pelvis);
-
-    // ═══ PECTORALS (males) / BUST (females) ═══
+    // Pec/bust overlay
     if (isMale && bmi < 30) {
-        [-1, 1].forEach(side => {
-            const pec = limb(0.17 * f, 0.08, 0.10 * f, side * 0.16, 1.72, 0.10);
-            bodyModel.add(pec);
+        [-1,1].forEach(s => {
+            const pg = new THREE.SphereGeometry(0.10 * f, 16, 12);
+            pg.scale(1.4, 0.7, 0.8);
+            const pm = new THREE.Mesh(pg, skin);
+            pm.position.set(s * 0.14, 1.72, 0.14 * cW * f);
+            bodyModel.add(pm);
         });
     } else if (!isMale) {
-        [-1, 1].forEach(side => {
-            const bust = limb(0.13 * f, 0.10, 0.11 * f, side * 0.14, 1.68, 0.12);
-            bodyModel.add(bust);
+        [-1,1].forEach(s => {
+            const bg = new THREE.SphereGeometry(0.11 * f, 16, 12);
+            bg.scale(1.1, 1.0, 0.9);
+            const bm = new THREE.Mesh(bg, skin);
+            bm.position.set(s * 0.12, 1.66, 0.14 * f);
+            bodyModel.add(bm);
         });
     }
 
-    // ═══ SHOULDERS / DELTOIDS ═══
+    // ═══ SHORTS ═══
+    const shortsProf = [
+        [0, 0], [pWid*1.02, 0.01], [pWid*0.98, 0.08], [pWid*0.86, 0.18], [0, 0.18]
+    ];
+    bodyModel.add(lathePart(shortsProf, dark, 0, 1.04, 0));
+
+    // ═══ ARMS (each arm is a smooth lathe) ═══
     [-1, 1].forEach(side => {
-        const delt = limb(0.16 * aW * f, 0.12, 0.14 * aW * f, side * 0.44 * sW * f, 1.80, 0);
+        const sx = side * (tw + 0.12) * sW;
+        const armR = 0.075 * aW * f;
+
+        // Shoulder cap (smooth sphere)
+        const dGeo = new THREE.SphereGeometry(0.12 * aW * f, 20, 16);
+        dGeo.scale(1.2, 0.9, 1.1);
+        const delt = new THREE.Mesh(dGeo, skin);
+        delt.position.set(sx, 1.84, 0);
         bodyModel.add(delt);
-    });
 
-    // ═══ ARMS ═══
-    [-1, 1].forEach(side => {
-        const sx = side * 0.52 * sW * f;
+        // Arm profile (shoulder → hand)
+        const armProf = [
+            [0, 0],
+            [armR*1.2, 0.01],  // deltoid base
+            [armR*1.3, 0.08],  // bicep peak
+            [armR*1.1, 0.20],  // mid upper arm
+            [armR*0.85, 0.30], // elbow
+            [armR*1.0, 0.38],  // forearm bulge
+            [armR*0.85, 0.52], // mid forearm
+            [armR*0.6, 0.62],  // wrist
+            [armR*0.55, 0.64], // wrist base
+            [0, 0.64],
+        ];
+        const arm = lathePart(armProf, skin, sx, 1.20, 0);
+        bodyModel.add(arm);
 
-        // Upper arm (bicep/tricep)
-        const ua = limb(0.10 * aW * f, 0.20, 0.10 * aW * f, sx, 1.58, 0);
-        bodyModel.add(ua);
+        // Hand
+        const handGeo = new THREE.BoxGeometry(0.08, 0.12, 0.04, 2, 2, 2);
+        const hand = new THREE.Mesh(handGeo, skin);
+        hand.position.set(sx, 0.94, 0);
+        bodyModel.add(hand);
 
-        // Elbow joint
-        const elbow = limb(0.085 * aW * f, 0.06, 0.085 * aW * f, sx, 1.40, 0);
-        bodyModel.add(elbow);
-
-        // Forearm
-        const fa = limb(0.08 * aW * f, 0.18, 0.08 * aW * f, sx, 1.22, 0);
-        bodyModel.add(fa);
-
-        // Wrist
-        const wrist = limb(0.055, 0.04, 0.04, sx, 1.05, 0);
-        bodyModel.add(wrist);
-
-        // Hand (flat box-like)
-        const handGeo = new THREE.BoxGeometry(0.09, 0.14, 0.04);
-        const handEdges = new THREE.Mesh(handGeo, skinMat);
-        handEdges.position.set(sx, 0.92, 0);
-        bodyModel.add(handEdges);
-
-        // Fingers
+        // Fingers (4 + thumb)
         for (let fi = 0; fi < 4; fi++) {
-            const fGeo = new THREE.CylinderGeometry(0.012, 0.010, 0.08, 6);
-            const finger = new THREE.Mesh(fGeo, skinMat);
-            finger.position.set(sx - 0.03 + fi * 0.02, 0.82, 0);
+            const fg = new THREE.CylinderGeometry(0.011, 0.009, 0.07, 6);
+            const finger = new THREE.Mesh(fg, skin);
+            finger.position.set(sx - 0.025 + fi * 0.018, 0.85, 0);
             bodyModel.add(finger);
         }
-        // Thumb
-        const thumbGeo = new THREE.CylinderGeometry(0.014, 0.011, 0.06, 6);
-        const thumb = new THREE.Mesh(thumbGeo, skinMat);
-        thumb.position.set(sx + side * 0.05, 0.88, 0.02);
+        const tg = new THREE.CylinderGeometry(0.013, 0.010, 0.055, 6);
+        const thumb = new THREE.Mesh(tg, skin);
+        thumb.position.set(sx + side * 0.045, 0.90, 0.02);
         thumb.rotation.z = side * 0.5;
         bodyModel.add(thumb);
     });
 
-    // ═══ SHORTS / UNDERWEAR ═══
-    const shortsGeo = new THREE.CylinderGeometry(0.34 * hW * f, 0.32 * hW * f, 0.22, 16);
-    const shorts = new THREE.Mesh(shortsGeo, darkMat);
-    shorts.position.set(0, 1.06, 0);
-    bodyModel.add(shorts);
-
-    // ═══ LEGS ═══
+    // ═══ LEGS (smooth lathe per leg) ═══
     [-1, 1].forEach(side => {
-        const lx = side * 0.18 * hW * f;
+        const lx = side * 0.16 * hW * f;
+        const legR = 0.12 * hW * f;
 
-        // Upper thigh / glute connection
-        const ut = limb(0.15 * hW * f, 0.12, 0.14 * f, lx, 0.98, 0);
-        bodyModel.add(ut);
-
-        // Thigh
-        const thigh = limb(0.14 * hW * f, 0.22, 0.14 * f, lx, 0.76, 0);
-        bodyModel.add(thigh);
-
-        // Lower thigh / quad
-        const quad = limb(0.12 * f, 0.16, 0.12 * f, lx, 0.56, 0);
-        bodyModel.add(quad);
-
-        // Knee joint
-        const knee = limb(0.09 * f, 0.06, 0.09 * f, lx, 0.42, 0);
-        bodyModel.add(knee);
-
-        // Calf
-        const calf = limb(0.10 * f, 0.18, 0.09 * f, lx, 0.26, 0);
-        bodyModel.add(calf);
-
-        // Lower calf / shin
-        const shin = limb(0.07 * f, 0.12, 0.07 * f, lx, 0.12, 0);
-        bodyModel.add(shin);
-
-        // Ankle
-        const ankle = limb(0.055, 0.04, 0.05, lx, 0.02, 0);
-        bodyModel.add(ankle);
+        const legProf = [
+            [0, 0],
+            [legR*1.3, 0.01],  // upper thigh
+            [legR*1.25, 0.10], // thigh
+            [legR*1.1, 0.22],  // mid thigh
+            [legR*0.9, 0.35],  // above knee
+            [legR*0.75, 0.40], // knee
+            [legR*0.85, 0.48], // calf peak
+            [legR*0.7, 0.60],  // mid calf
+            [legR*0.5, 0.72],  // shin
+            [legR*0.38, 0.80], // ankle
+            [legR*0.35, 0.82], // ankle base
+            [0, 0.82],
+        ];
+        bodyModel.add(lathePart(legProf, skin, lx, 0.18, 0));
 
         // Foot
-        const footGeo = new THREE.BoxGeometry(0.10, 0.05, 0.22);
-        const edges = new THREE.Mesh(footGeo, skinMat);
-        edges.position.set(lx, -0.02, 0.06);
-        // Rounded edges
-        bodyModel.add(edges);
+        const footGeo = new THREE.BoxGeometry(0.10, 0.045, 0.22, 2, 1, 2);
+        const foot = new THREE.Mesh(footGeo, skin);
+        foot.position.set(lx, 0.00, 0.06);
+        bodyModel.add(foot);
     });
 
-    // ═══ ABDOMINAL DETAIL (fit bodies only) ═══
-    if (isMale && bmi < 27) {
-        const detailMat = new THREE.MeshStandardMaterial({
-            color: skinColor,
-            roughness: 0.6,
-            metalness: 0.01,
-            emissive: 0x000000,
-        });
-        // Ab bumps (3 rows × 2)
+    // ═══ ABS detail (fit males) ═══
+    if (isMale && bmi < 26) {
         for (let row = 0; row < 3; row++) {
-            [-1, 1].forEach(side => {
-                const ab = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), detailMat);
-                ab.position.set(side * 0.06, 1.42 - row * 0.09, 0.15);
-                ab.scale.set(1, 0.8, 0.5);
+            [-1, 1].forEach(s => {
+                const ab = new THREE.Mesh(new THREE.SphereGeometry(0.038, 12, 10), skin);
+                ab.position.set(s * 0.055, 1.44 - row * 0.08, 0.18 * wW * f);
+                ab.scale.set(1, 0.75, 0.4);
                 bodyModel.add(ab);
             });
         }
@@ -313,51 +261,40 @@ function drawVitruvianBody() {
 
     bodyScene.add(bodyModel);
 
-    // Subtle ground shadow
-    const shadowGeo = new THREE.PlaneGeometry(1.5, 1.5);
-    const shadowMat = new THREE.MeshBasicMaterial({
-        color: 0x000000,
-        transparent: true,
-        opacity: 0.2,
-    });
-    const shadow = new THREE.Mesh(shadowGeo, shadowMat);
-    shadow.rotation.x = -Math.PI / 2;
-    shadow.position.y = -0.05;
-    bodyScene.add(shadow);
+    // Ground shadow
+    const shMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.18 });
+    const sh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), shMat);
+    sh.rotation.x = -Math.PI / 2; sh.position.y = -0.04;
+    bodyScene.add(sh);
 
-    // BMI overlay badge
+    // Overlay badges
     const bmiCat = getBMICategory(bmi);
     const overlay = document.getElementById('bodyOverlayInfo');
     if (overlay) {
-        overlay.innerHTML = `
-            <span class="bmi-badge-3d" style="background:${bmiCat.color}22;color:${bmiCat.color};border:1px solid ${bmiCat.color}44">${bmiCat.text} · BMI ${bmi.toFixed(1)}</span>
-            <span class="weight-badge-3d">${weight} lbs · ${(weight * 0.453592).toFixed(1)} kg</span>
-        `;
+        overlay.innerHTML = '<span class="bmi-badge-3d" style="background:' + bmiCat.color + '22;color:' + bmiCat.color + ';border:1px solid ' + bmiCat.color + '44">' + bmiCat.text + ' &middot; BMI ' + bmi.toFixed(1) + '</span>' +
+            '<span class="weight-badge-3d">' + weight + ' lbs &middot; ' + (weight*0.453592).toFixed(1) + ' kg</span>';
     }
 
     // Animate
     function animate() {
         requestAnimationFrame(animate);
         if (bodyControls) bodyControls.update();
-
-        // Slow idle rotation
-        if (bodyModel) {
-            bodyModel.rotation.y += 0.002;
-        }
-
+        if (bodyModel) bodyModel.rotation.y += 0.002;
         bodyRenderer.render(bodyScene, bodyCamera);
     }
     animate();
 
-    // Responsive resize
-    const resizeObs = new ResizeObserver(() => {
+    // Responsive resize (use fixed container height to prevent feedback loop)
+    const ro = new ResizeObserver(() => {
         const nw = container.clientWidth;
-        const nh = container.clientHeight || 520;
-        bodyCamera.aspect = nw / nh;
-        bodyCamera.updateProjectionMatrix();
-        bodyRenderer.setSize(nw, nh);
+        const nh = container.offsetHeight || 520;
+        if (nw > 0 && nh > 0) {
+            bodyCamera.aspect = nw / nh;
+            bodyCamera.updateProjectionMatrix();
+            bodyRenderer.setSize(nw, nh, false);
+        }
     });
-    resizeObs.observe(container);
+    ro.observe(container);
 }
 
 /* ════════════════════════════════════════════════
