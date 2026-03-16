@@ -85,9 +85,16 @@
                     Already have an account? <a href="#" onclick="showLogin()">Login</a>
                 </p>
             </div>
+
+            <!-- Import Data on Login Page -->
+            <div class="data-import-login">
+                <p>Switching devices? <a href="#" onclick="document.getElementById('loginImportFile').click()">Import your FitForge backup</a></p>
+                <input type="file" id="loginImportFile" accept=".json" style="display:none" onchange="importOnLogin(event)">
+            </div>
         </div>
     </div>
 
+    <script src="app.js"></script>
     <script src="auth.js"></script>
 </body>
 </html>

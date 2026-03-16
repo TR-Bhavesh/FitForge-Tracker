@@ -8,12 +8,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /* ════════════════════════════════════════════════
-   ANATOMICAL BODY VISUALIZATION
-   Realistic humanoid figure · Gender-aware · BMI-responsive
+   3D ANATOMICAL BODY — Three.js
+   Realistic humanoid built from smooth geometry
+   Gender-aware · BMI-responsive · Interactive orbit
    ════════════════════════════════════════════════ */
+let bodyScene, bodyCamera, bodyRenderer, bodyControls, bodyModel;
+
 function drawVitruvianBody() {
-    const svg = document.getElementById('vitruvianSVG');
-    if (!svg) return;
+    const container = document.getElementById('bodyDisplayContainer');
+    const canvas = document.getElementById('bodyCanvas3D');
+    if (!container || !canvas) return;
 
     const gender   = currentUser.gender || 'male';
     const weight   = currentUser.weight || 160;
@@ -22,321 +26,333 @@ function drawVitruvianBody() {
     const bmi      = calculateBMIValue(weight, heightIn);
     const isMale   = gender !== 'female';
 
-    // BMI → horizontal body-width scale
-    let bs;
-    if (bmi < 18.5)      bs = 0.82;
-    else if (bmi < 22)   bs = 0.90;
-    else if (bmi < 25)   bs = 1.0;
-    else if (bmi < 28)   bs = 1.10;
-    else if (bmi < 32)   bs = 1.22;
-    else                  bs = 1.35;
+    // BMI → body scale factor
+    let fatScale;
+    if (bmi < 18.5)      fatScale = 0.82;
+    else if (bmi < 22)   fatScale = 0.90;
+    else if (bmi < 25)   fatScale = 1.0;
+    else if (bmi < 28)   fatScale = 1.12;
+    else if (bmi < 32)   fatScale = 1.26;
+    else                  fatScale = 1.42;
 
-    const cx = 250; // centre x of the 500-wide viewBox
+    // Cleanup previous render
+    if (bodyRenderer) {
+        bodyRenderer.dispose();
+        if (bodyControls) bodyControls.dispose();
+    }
 
-    // Gender proportion factors
-    const sF = isMale ? 1 : 0.80;   // shoulder
-    const hF = isMale ? 1 : 1.16;   // hip
-    const wF = isMale ? 1 : 0.88;   // waist
-    const aF = isMale ? 1 : 0.78;   // arm
-    const lF = isMale ? 1 : 1.06;   // leg
+    // Scene
+    bodyScene = new THREE.Scene();
 
-    // Scaled half-width helper
-    const S = (v, g) => v * bs * (g || 1);
+    // Camera
+    const w = container.clientWidth || 400;
+    const h = container.clientHeight || 520;
+    bodyCamera = new THREE.PerspectiveCamera(32, w / h, 0.1, 100);
+    bodyCamera.position.set(0, 1.0, 5.5);
 
-    /* ── Y landmarks (8-head proportional canon) ── */
-    const headTop = 40, headCy = 68, chin = 98;
-    const neckBase = 114, shY = 124;
-    const pitY = 156, pec = 170, chestBot = 184;
-    const ribY = 202, waistY = 220, navelY = 234;
-    const iliac = 254, pubic = 274, crotchY = 288;
-    const midThigh = 334, kneeTop = 362, kneeY = 375, kneeBot = 388;
-    const calfY = 420, ankleY = 478, heelY = 494, toeY = 508;
+    // Renderer
+    bodyRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    bodyRenderer.setSize(w, h);
+    bodyRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    bodyRenderer.setClearColor(0x000000, 0);
+    bodyRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+    bodyRenderer.toneMappingExposure = 1.1;
 
-    /* ── Half-widths from centre ── */
-    const nk  = S(11);            // neck
-    const tr  = S(32, sF);        // trap
-    const sh  = S(74, sF);        // shoulder tip
-    const sj  = S(68, sF);        // shoulder joint
-    const bw  = S(50, wF);        // body at pit
-    const ch  = S(54, wF);        // chest
-    const wa  = S(38, wF);        // waist
-    const hi  = S(48, hF);        // hip
-    const gr  = S(7);             // groin gap half
+    // Orbit controls
+    bodyControls = new THREE.OrbitControls(bodyCamera, canvas);
+    bodyControls.enableDamping = true;
+    bodyControls.dampingFactor = 0.08;
+    bodyControls.enablePan = false;
+    bodyControls.minDistance = 3;
+    bodyControls.maxDistance = 10;
+    bodyControls.target.set(0, 0.9, 0);
 
-    // Arm joint x-offsets from shoulder joint (outward)
-    const elOff = S(42, aF), wrOff = S(56, aF), fiOff = S(60, aF);
-    // Arm widths (half)
-    const dR = S(15, aF), ua = S(7, aF), fa = S(5.5, aF), wr = S(3.8, aF), hn = S(5, aF);
+    // Lighting
+    const amb = new THREE.AmbientLight(0xc8a55a, 0.5);
+    bodyScene.add(amb);
+    const key = new THREE.DirectionalLight(0xffeedd, 1.8);
+    key.position.set(3, 5, 4);
+    bodyScene.add(key);
+    const fill = new THREE.DirectionalLight(0x8899bb, 0.6);
+    fill.position.set(-3, 3, -2);
+    bodyScene.add(fill);
+    const rim = new THREE.DirectionalLight(0xc8a05a, 0.5);
+    rim.position.set(0, 2, -5);
+    bodyScene.add(rim);
+    const top = new THREE.DirectionalLight(0xffffff, 0.3);
+    top.position.set(0, 8, 0);
+    bodyScene.add(top);
 
-    // Arm positions
-    const rSj = cx + sj, lSj = cx - sj;
-    const rEl = rSj + elOff, lEl = lSj - elOff;
-    const rWr = rSj + wrOff, lWr = lSj - wrOff;
-    const rFi = rSj + fiOff, lFi = lSj - fiOff;
-    const elY = 250, wrY = 358, fiY = 394;
+    // Skin material — subsurface-look
+    const skinColor = isMale ? 0xd4a574 : 0xe0b090;
+    const skinMat = new THREE.MeshStandardMaterial({
+        color: skinColor,
+        roughness: 0.55,
+        metalness: 0.02,
+        emissive: skinColor,
+        emissiveIntensity: 0.04,
+    });
+    const darkMat = new THREE.MeshStandardMaterial({
+        color: 0x2a2e3a,
+        roughness: 0.7,
+        metalness: 0.0,
+    });
+    const hairColor = isMale ? 0x3a2a1a : 0x2a1a0a;
+    const hairMat = new THREE.MeshStandardMaterial({
+        color: hairColor,
+        roughness: 0.8,
+        metalness: 0.0,
+    });
 
-    // Leg centre axis offset from cx
-    const legOff = (gr + hi) / 2;
-    const rLc = cx + legOff, lLc = cx - legOff;
-    // Leg half-widths
-    const th = S(21, lF), kn = S(13, lF), cf = S(15, lF), an = S(8), ftL = 24;
+    // Build body group
+    bodyModel = new THREE.Group();
 
-    /* ── Colours ── */
-    const mc = 'rgba(200,165,90,0.88)';
-    const lc = 'rgba(200,165,90,0.38)';
-    const fc = 'rgba(200,165,90,0.16)';
-    const dc = 'rgba(200,165,90,0.28)';
-    const bf = 'rgba(200,165,90,0.035)';
-    const hf = 'rgba(200,165,90,0.06)';
+    // Helper: create capsule-like body part (elongated sphere)
+    function limb(rx, ry, rz, px, py, pz, rotX, rotZ) {
+        const geo = new THREE.SphereGeometry(1, 24, 16);
+        geo.scale(rx, ry, rz);
+        const mesh = new THREE.Mesh(geo, skinMat);
+        mesh.position.set(px, py, pz);
+        if (rotX) mesh.rotation.x = rotX;
+        if (rotZ) mesh.rotation.z = rotZ;
+        return mesh;
+    }
 
+    // Gender body proportion adjustments
+    const sW = isMale ? 1.0 : 0.82;   // shoulders
+    const hW = isMale ? 1.0 : 1.18;   // hips
+    const wW = isMale ? 1.0 : 0.92;   // waist
+    const cW = isMale ? 1.12 : 1.0;   // chest prominence
+    const aW = isMale ? 1.0 : 0.80;   // arm thickness
+
+    const f = fatScale;
+
+    // ═══ HEAD ═══
+    const head = limb(0.25, 0.30, 0.26, 0, 2.25, 0);
+    bodyModel.add(head);
+
+    // Hair
+    const hairGeo = new THREE.SphereGeometry(1, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55);
+    hairGeo.scale(0.265, 0.28, 0.27);
+    const hair = new THREE.Mesh(hairGeo, hairMat);
+    hair.position.set(0, 2.34, -0.01);
+    bodyModel.add(hair);
+    if (!isMale) {
+        // Longer hair sides
+        const hairSideGeo = new THREE.CylinderGeometry(0.06, 0.04, 0.6, 8);
+        [-1, 1].forEach(side => {
+            const hs = new THREE.Mesh(hairSideGeo, hairMat);
+            hs.position.set(side * 0.22, 2.05, -0.05);
+            hs.rotation.z = side * 0.15;
+            bodyModel.add(hs);
+        });
+    }
+
+    // Eyes (simplified)
+    const eyeMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.3 });
+    [-1, 1].forEach(side => {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 10, 8), eyeMat);
+        eye.position.set(side * 0.085, 2.27, 0.22);
+        bodyModel.add(eye);
+    });
+
+    // ═══ NECK ═══
+    const neck = limb(0.1 * f, 0.12, 0.09 * f, 0, 1.97, 0);
+    bodyModel.add(neck);
+
+    // ═══ TORSO ═══
+    // Upper chest / trapezius zone
+    const upperChest = limb(0.42 * sW * f, 0.18, 0.22 * cW * f, 0, 1.82, 0);
+    bodyModel.add(upperChest);
+
+    // Mid chest
+    const midChest = limb(0.40 * sW * f, 0.16, 0.20 * cW * f, 0, 1.65, 0);
+    bodyModel.add(midChest);
+
+    // Ribcage
+    const ribs = limb(0.35 * wW * f, 0.14, 0.18 * f, 0, 1.48, 0);
+    bodyModel.add(ribs);
+
+    // Waist / abdomen
+    const waist = limb(0.28 * wW * f, 0.14, 0.16 * f, 0, 1.32, 0);
+    bodyModel.add(waist);
+
+    // Pelvis / hips
+    const pelvis = limb(0.34 * hW * f, 0.16, 0.18 * f, 0, 1.14, 0);
+    bodyModel.add(pelvis);
+
+    // ═══ PECTORALS (males) / BUST (females) ═══
+    if (isMale && bmi < 30) {
+        [-1, 1].forEach(side => {
+            const pec = limb(0.17 * f, 0.08, 0.10 * f, side * 0.16, 1.72, 0.10);
+            bodyModel.add(pec);
+        });
+    } else if (!isMale) {
+        [-1, 1].forEach(side => {
+            const bust = limb(0.13 * f, 0.10, 0.11 * f, side * 0.14, 1.68, 0.12);
+            bodyModel.add(bust);
+        });
+    }
+
+    // ═══ SHOULDERS / DELTOIDS ═══
+    [-1, 1].forEach(side => {
+        const delt = limb(0.16 * aW * f, 0.12, 0.14 * aW * f, side * 0.44 * sW * f, 1.80, 0);
+        bodyModel.add(delt);
+    });
+
+    // ═══ ARMS ═══
+    [-1, 1].forEach(side => {
+        const sx = side * 0.52 * sW * f;
+
+        // Upper arm (bicep/tricep)
+        const ua = limb(0.10 * aW * f, 0.20, 0.10 * aW * f, sx, 1.58, 0);
+        bodyModel.add(ua);
+
+        // Elbow joint
+        const elbow = limb(0.085 * aW * f, 0.06, 0.085 * aW * f, sx, 1.40, 0);
+        bodyModel.add(elbow);
+
+        // Forearm
+        const fa = limb(0.08 * aW * f, 0.18, 0.08 * aW * f, sx, 1.22, 0);
+        bodyModel.add(fa);
+
+        // Wrist
+        const wrist = limb(0.055, 0.04, 0.04, sx, 1.05, 0);
+        bodyModel.add(wrist);
+
+        // Hand (flat box-like)
+        const handGeo = new THREE.BoxGeometry(0.09, 0.14, 0.04);
+        const handEdges = new THREE.Mesh(handGeo, skinMat);
+        handEdges.position.set(sx, 0.92, 0);
+        bodyModel.add(handEdges);
+
+        // Fingers
+        for (let fi = 0; fi < 4; fi++) {
+            const fGeo = new THREE.CylinderGeometry(0.012, 0.010, 0.08, 6);
+            const finger = new THREE.Mesh(fGeo, skinMat);
+            finger.position.set(sx - 0.03 + fi * 0.02, 0.82, 0);
+            bodyModel.add(finger);
+        }
+        // Thumb
+        const thumbGeo = new THREE.CylinderGeometry(0.014, 0.011, 0.06, 6);
+        const thumb = new THREE.Mesh(thumbGeo, skinMat);
+        thumb.position.set(sx + side * 0.05, 0.88, 0.02);
+        thumb.rotation.z = side * 0.5;
+        bodyModel.add(thumb);
+    });
+
+    // ═══ SHORTS / UNDERWEAR ═══
+    const shortsGeo = new THREE.CylinderGeometry(0.34 * hW * f, 0.32 * hW * f, 0.22, 16);
+    const shorts = new THREE.Mesh(shortsGeo, darkMat);
+    shorts.position.set(0, 1.06, 0);
+    bodyModel.add(shorts);
+
+    // ═══ LEGS ═══
+    [-1, 1].forEach(side => {
+        const lx = side * 0.18 * hW * f;
+
+        // Upper thigh / glute connection
+        const ut = limb(0.15 * hW * f, 0.12, 0.14 * f, lx, 0.98, 0);
+        bodyModel.add(ut);
+
+        // Thigh
+        const thigh = limb(0.14 * hW * f, 0.22, 0.14 * f, lx, 0.76, 0);
+        bodyModel.add(thigh);
+
+        // Lower thigh / quad
+        const quad = limb(0.12 * f, 0.16, 0.12 * f, lx, 0.56, 0);
+        bodyModel.add(quad);
+
+        // Knee joint
+        const knee = limb(0.09 * f, 0.06, 0.09 * f, lx, 0.42, 0);
+        bodyModel.add(knee);
+
+        // Calf
+        const calf = limb(0.10 * f, 0.18, 0.09 * f, lx, 0.26, 0);
+        bodyModel.add(calf);
+
+        // Lower calf / shin
+        const shin = limb(0.07 * f, 0.12, 0.07 * f, lx, 0.12, 0);
+        bodyModel.add(shin);
+
+        // Ankle
+        const ankle = limb(0.055, 0.04, 0.05, lx, 0.02, 0);
+        bodyModel.add(ankle);
+
+        // Foot
+        const footGeo = new THREE.BoxGeometry(0.10, 0.05, 0.22);
+        const edges = new THREE.Mesh(footGeo, skinMat);
+        edges.position.set(lx, -0.02, 0.06);
+        // Rounded edges
+        bodyModel.add(edges);
+    });
+
+    // ═══ ABDOMINAL DETAIL (fit bodies only) ═══
+    if (isMale && bmi < 27) {
+        const detailMat = new THREE.MeshStandardMaterial({
+            color: skinColor,
+            roughness: 0.6,
+            metalness: 0.01,
+            emissive: 0x000000,
+        });
+        // Ab bumps (3 rows × 2)
+        for (let row = 0; row < 3; row++) {
+            [-1, 1].forEach(side => {
+                const ab = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), detailMat);
+                ab.position.set(side * 0.06, 1.42 - row * 0.09, 0.15);
+                ab.scale.set(1, 0.8, 0.5);
+                bodyModel.add(ab);
+            });
+        }
+    }
+
+    bodyScene.add(bodyModel);
+
+    // Subtle ground shadow
+    const shadowGeo = new THREE.PlaneGeometry(1.5, 1.5);
+    const shadowMat = new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.2,
+    });
+    const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+    shadow.rotation.x = -Math.PI / 2;
+    shadow.position.y = -0.05;
+    bodyScene.add(shadow);
+
+    // BMI overlay badge
     const bmiCat = getBMICategory(bmi);
+    const overlay = document.getElementById('bodyOverlayInfo');
+    if (overlay) {
+        overlay.innerHTML = `
+            <span class="bmi-badge-3d" style="background:${bmiCat.color}22;color:${bmiCat.color};border:1px solid ${bmiCat.color}44">${bmiCat.text} · BMI ${bmi.toFixed(1)}</span>
+            <span class="weight-badge-3d">${weight} lbs · ${(weight * 0.453592).toFixed(1)} kg</span>
+        `;
+    }
 
-    /* ═══ BUILD SVG ═══ */
-    svg.innerHTML = `
-    <defs>
-      <radialGradient id="vG" cx="50%" cy="44%" r="52%">
-        <stop offset="0%" stop-color="rgba(200,165,90,0.10)"/>
-        <stop offset="100%" stop-color="transparent"/>
-      </radialGradient>
-      <filter id="glo"><feGaussianBlur stdDeviation="1.2"/></filter>
-    </defs>
+    // Animate
+    function animate() {
+        requestAnimationFrame(animate);
+        bodyControls.update();
 
-    <!-- Background aura -->
-    <ellipse cx="${cx}" cy="290" rx="220" ry="270" fill="url(#vG)"/>
-    <!-- Vitruvian circle -->
-    <circle cx="${cx}" cy="285" r="210" fill="none" stroke="${fc}" stroke-width=".8" stroke-dasharray="4 6"/>
-    <!-- Vitruvian square -->
-    <rect x="${cx - 200}" y="60" width="400" height="460" fill="none" stroke="${fc}" stroke-width=".8" stroke-dasharray="4 6" rx="3"/>
+        // Slow idle rotation
+        if (bodyModel) {
+            bodyModel.rotation.y += 0.002;
+        }
 
-    <g>
-    <!-- ════ LEFT LEG ════ -->
-    <path d="
-      M ${cx - hi + 6},${crotchY - 4}
-      C ${cx - hi + 2},${crotchY + 14}  ${lLc - th - 6},${midThigh - 24}  ${lLc - th - 2},${midThigh}
-      C ${lLc - th + 2},${midThigh + 20} ${lLc - kn - 6},${kneeTop - 8}   ${lLc - kn - 2},${kneeY}
-      C ${lLc - kn},${kneeBot}           ${lLc - cf - 4},${calfY - 22}     ${lLc - cf},${calfY}
-      C ${lLc - cf + 2},${calfY + 22}    ${lLc - an - 3},${ankleY - 16}    ${lLc - an},${ankleY}
-      L ${lLc - an},${heelY}
-      L ${lLc - an - ftL},${toeY}
-      L ${lLc + an + 4},${toeY}
-      L ${lLc + an},${heelY}
-      L ${lLc + an},${ankleY}
-      C ${lLc + an + 3},${ankleY - 16}   ${lLc + cf - 6},${calfY + 22}     ${lLc + cf - 8},${calfY}
-      C ${lLc + cf - 10},${calfY - 22}   ${lLc + kn - 4},${kneeBot}        ${lLc + kn - 2},${kneeY}
-      C ${lLc + kn},${kneeTop - 8}       ${lLc + th - 8},${midThigh + 20}  ${lLc + th - 10},${midThigh}
-      C ${lLc + th - 12},${midThigh - 24} ${cx - gr - 2},${crotchY + 14}   ${cx - gr},${crotchY}
-      Z" fill="${bf}" stroke="${mc}" stroke-width="1.4" stroke-linejoin="round"/>
+        bodyRenderer.render(bodyScene, bodyCamera);
+    }
+    animate();
 
-    <!-- ════ RIGHT LEG ════ -->
-    <path d="
-      M ${cx + hi - 6},${crotchY - 4}
-      C ${cx + hi - 2},${crotchY + 14}  ${rLc + th + 6},${midThigh - 24}  ${rLc + th + 2},${midThigh}
-      C ${rLc + th - 2},${midThigh + 20} ${rLc + kn + 6},${kneeTop - 8}   ${rLc + kn + 2},${kneeY}
-      C ${rLc + kn},${kneeBot}           ${rLc + cf + 4},${calfY - 22}     ${rLc + cf},${calfY}
-      C ${rLc + cf - 2},${calfY + 22}    ${rLc + an + 3},${ankleY - 16}    ${rLc + an},${ankleY}
-      L ${rLc + an},${heelY}
-      L ${rLc + an + ftL},${toeY}
-      L ${rLc - an - 4},${toeY}
-      L ${rLc - an},${heelY}
-      L ${rLc - an},${ankleY}
-      C ${rLc - an - 3},${ankleY - 16}   ${rLc - cf + 6},${calfY + 22}     ${rLc - cf + 8},${calfY}
-      C ${rLc - cf + 10},${calfY - 22}   ${rLc - kn + 4},${kneeBot}        ${rLc - kn + 2},${kneeY}
-      C ${rLc - kn},${kneeTop - 8}       ${rLc - th + 8},${midThigh + 20}  ${rLc - th + 10},${midThigh}
-      C ${rLc - th + 12},${midThigh - 24} ${cx + gr + 2},${crotchY + 14}   ${cx + gr},${crotchY}
-      Z" fill="${bf}" stroke="${mc}" stroke-width="1.4" stroke-linejoin="round"/>
-
-    <!-- ════ TORSO ════ -->
-    <path d="
-      M ${cx - nk},${neckBase}
-      C ${cx - nk - 10},${neckBase + 2}  ${cx - tr - 4},${shY - 4}   ${cx - sj + 2},${shY}
-      L ${cx - sj - 4},${shY + 2}
-      C ${cx - sj + 2},${shY + 16}  ${cx - bw - 4},${pitY - 14}  ${cx - bw},${pitY}
-      C ${cx - ch - 3},${pitY + 10}  ${cx - ch},${chestBot}        ${cx - ch + 4},${ribY}
-      C ${cx - ch + 8},${ribY + 8}   ${cx - wa - 6},${waistY - 8}  ${cx - wa},${waistY}
-      C ${cx - wa + 2},${waistY + 10} ${cx - hi - 4},${iliac - 8}  ${cx - hi},${iliac}
-      C ${cx - hi - 2},${iliac + 10}  ${cx - hi + 2},${pubic}       ${cx - hi + 6},${crotchY - 4}
-      L ${cx - gr},${crotchY}
-      L ${cx + gr},${crotchY}
-      L ${cx + hi - 6},${crotchY - 4}
-      C ${cx + hi - 2},${pubic}       ${cx + hi + 2},${iliac + 10}  ${cx + hi},${iliac}
-      C ${cx + hi + 4},${iliac - 8}   ${cx + wa - 2},${waistY + 10} ${cx + wa},${waistY}
-      C ${cx + wa + 6},${waistY - 8}  ${cx + ch - 8},${ribY + 8}   ${cx + ch - 4},${ribY}
-      C ${cx + ch},${chestBot}         ${cx + ch + 3},${pitY + 10}  ${cx + bw},${pitY}
-      C ${cx + bw + 4},${pitY - 14}  ${cx + sj - 2},${shY + 16}   ${cx + sj + 4},${shY + 2}
-      L ${cx + sj - 2},${shY}
-      C ${cx + tr + 4},${shY - 4}    ${cx + nk + 10},${neckBase + 2} ${cx + nk},${neckBase}
-      Z" fill="${bf}" stroke="${mc}" stroke-width="1.4" stroke-linejoin="round"/>
-
-    <!-- ════ LEFT ARM ════ -->
-    <path d="
-      M ${lSj + 4},${shY - 2}
-      C ${lSj - dR - 4},${shY - 6}   ${lSj - dR - 8},${shY + 16}  ${lSj - dR - 2},${shY + 36}
-      C ${lSj - dR + 2},${shY + 56}  ${lEl - ua - 6},${elY - 44}   ${lEl - ua - 2},${elY - 4}
-      C ${lEl - ua},${elY + 6}        ${lEl - fa - 6},${elY + 18}   ${lEl - fa - 2},${elY + 32}
-      C ${lWr - wr - 6},${wrY - 50}   ${lWr - wr - 2},${wrY - 12}  ${lWr - wr},${wrY}
-      L ${lWr - wr - 2},${wrY + 14}
-      L ${lFi - hn},${fiY - 10}
-      L ${lFi - 2},${fiY}
-      L ${lFi + hn - 2},${fiY - 8}
-      L ${lWr + wr + 2},${wrY + 14}
-      L ${lWr + wr},${wrY}
-      C ${lWr + wr + 2},${wrY - 12}   ${lEl + fa - 2},${elY + 32}  ${lEl + fa},${elY + 8}
-      C ${lEl + fa + 2},${elY - 16}   ${lEl + ua + 4},${elY - 44}  ${lSj + 6},${pitY + 6}
-      C ${lSj + 2},${pitY - 6}        ${lSj + 6},${shY + 12}       ${lSj + 4},${shY - 2}
-      Z" fill="${bf}" stroke="${mc}" stroke-width="1.4" stroke-linejoin="round"/>
-
-    <!-- ════ RIGHT ARM ════ -->
-    <path d="
-      M ${rSj - 4},${shY - 2}
-      C ${rSj + dR + 4},${shY - 6}   ${rSj + dR + 8},${shY + 16}  ${rSj + dR + 2},${shY + 36}
-      C ${rSj + dR - 2},${shY + 56}  ${rEl + ua + 6},${elY - 44}   ${rEl + ua + 2},${elY - 4}
-      C ${rEl + ua},${elY + 6}        ${rEl + fa + 6},${elY + 18}   ${rEl + fa + 2},${elY + 32}
-      C ${rWr + wr + 6},${wrY - 50}   ${rWr + wr + 2},${wrY - 12}  ${rWr + wr},${wrY}
-      L ${rWr + wr + 2},${wrY + 14}
-      L ${rFi + hn},${fiY - 10}
-      L ${rFi + 2},${fiY}
-      L ${rFi - hn + 2},${fiY - 8}
-      L ${rWr - wr - 2},${wrY + 14}
-      L ${rWr - wr},${wrY}
-      C ${rWr - wr - 2},${wrY - 12}   ${rEl - fa + 2},${elY + 32}  ${rEl - fa},${elY + 8}
-      C ${rEl - fa - 2},${elY - 16}   ${rEl - ua - 4},${elY - 44}  ${rSj - 6},${pitY + 6}
-      C ${rSj - 2},${pitY - 6}        ${rSj - 6},${shY + 12}       ${rSj - 4},${shY - 2}
-      Z" fill="${bf}" stroke="${mc}" stroke-width="1.4" stroke-linejoin="round"/>
-
-    <!-- ════ NECK ════ -->
-    <path d="
-      M ${cx - nk - 2},${neckBase}
-      C ${cx - nk - 2},${neckBase - 4}  ${cx - nk + 1},${chin + 4}  ${cx - nk + 2},${chin + 2}
-      Q ${cx},${chin + 6}               ${cx + nk - 2},${chin + 2}
-      C ${cx + nk - 1},${chin + 4}      ${cx + nk + 2},${neckBase - 4} ${cx + nk + 2},${neckBase}
-      Z" fill="${bf}" stroke="${mc}" stroke-width="1.2"/>
-
-    <!-- ════ HEAD ════ -->
-    <ellipse cx="${cx}" cy="${headCy}" rx="24" ry="28" fill="${hf}" stroke="${mc}" stroke-width="1.4"/>
-
-    <!-- Subtle hair -->
-    ${isMale ? `
-    <path d="M ${cx - 22},${headCy - 16} C ${cx - 20},${headCy - 30} ${cx - 8},${headCy - 34} ${cx},${headCy - 32}
-             C ${cx + 8},${headCy - 34} ${cx + 20},${headCy - 30} ${cx + 22},${headCy - 16}"
-          fill="none" stroke="${mc}" stroke-width="1.1"/>` :
-    `<path d="M ${cx - 24},${headCy - 6} C ${cx - 26},${headCy - 32} ${cx - 10},${headCy - 38} ${cx},${headCy - 36}
-             C ${cx + 10},${headCy - 38} ${cx + 26},${headCy - 32} ${cx + 24},${headCy - 6}"
-          fill="none" stroke="${mc}" stroke-width="1.1"/>
-     <path d="M ${cx - 24},${headCy - 6} C ${cx - 28},${headCy + 12} ${cx - 26},${headCy + 36} ${cx - 22},${headCy + 44}"
-          fill="none" stroke="${lc}" stroke-width=".9"/>
-     <path d="M ${cx + 24},${headCy - 6} C ${cx + 28},${headCy + 12} ${cx + 26},${headCy + 36} ${cx + 22},${headCy + 44}"
-          fill="none" stroke="${lc}" stroke-width=".9"/>`}
-
-    <!-- Minimal face -->
-    <!-- Eyebrows -->
-    <path d="M ${cx - 14},${headCy - 7} Q ${cx - 10},${headCy - 10} ${cx - 5},${headCy - 7}" fill="none" stroke="${lc}" stroke-width=".8"/>
-    <path d="M ${cx + 14},${headCy - 7} Q ${cx + 10},${headCy - 10} ${cx + 5},${headCy - 7}" fill="none" stroke="${lc}" stroke-width=".8"/>
-    <!-- Eyes (subtle almond shapes) -->
-    <path d="M ${cx - 14},${headCy - 1} Q ${cx - 10},${headCy - 4} ${cx - 6},${headCy - 1} Q ${cx - 10},${headCy + 1} ${cx - 14},${headCy - 1}" fill="none" stroke="${lc}" stroke-width=".7"/>
-    <path d="M ${cx + 6},${headCy - 1} Q ${cx + 10},${headCy - 4} ${cx + 14},${headCy - 1} Q ${cx + 10},${headCy + 1} ${cx + 6},${headCy - 1}" fill="none" stroke="${lc}" stroke-width=".7"/>
-    <!-- Nose hint -->
-    <path d="M ${cx},${headCy + 3} L ${cx - 3},${headCy + 10} Q ${cx},${headCy + 11.5} ${cx + 3},${headCy + 10}" fill="none" stroke="${dc}" stroke-width=".6"/>
-    <!-- Mouth hint -->
-    <path d="M ${cx - 6},${headCy + 16} Q ${cx},${headCy + 18.5} ${cx + 6},${headCy + 16}" fill="none" stroke="${dc}" stroke-width=".5"/>
-
-    <!-- ═══ ANATOMY DETAIL LINES ═══ -->
-
-    <!-- Clavicle (collar bone) V -->
-    <path d="M ${cx - 2},${neckBase + 1} L ${cx - sj + 4},${shY + 3}" fill="none" stroke="${dc}" stroke-width=".8"/>
-    <path d="M ${cx + 2},${neckBase + 1} L ${cx + sj - 4},${shY + 3}" fill="none" stroke="${dc}" stroke-width=".8"/>
-
-    <!-- Centre line -->
-    <line x1="${cx}" y1="${shY + 10}" x2="${cx}" y2="${pubic - 4}" stroke="${fc}" stroke-width=".7"/>
-
-    ${isMale ? `
-    <!-- Pectorals -->
-    <path d="M ${cx - 4},${pec - 8}
-             C ${cx - ch/2 - 8},${pec - 4}  ${cx - ch/2 - 10},${pec + 14}  ${cx - 8},${pec + 16}"
-          fill="none" stroke="${dc}" stroke-width=".9"/>
-    <path d="M ${cx + 4},${pec - 8}
-             C ${cx + ch/2 + 8},${pec - 4}  ${cx + ch/2 + 10},${pec + 14}  ${cx + 8},${pec + 16}"
-          fill="none" stroke="${dc}" stroke-width=".9"/>
-    ` : `
-    <!-- Bust contours -->
-    <path d="M ${cx - 6},${pec - 4}
-             C ${cx - ch/2 + 2},${pec - 2}  ${cx - ch/2 - 2},${pec + 18}  ${cx - 6},${pec + 16}"
-          fill="none" stroke="${dc}" stroke-width=".8"/>
-    <path d="M ${cx + 6},${pec - 4}
-             C ${cx + ch/2 - 2},${pec - 2}  ${cx + ch/2 + 2},${pec + 18}  ${cx + 6},${pec + 16}"
-          fill="none" stroke="${dc}" stroke-width=".8"/>
-    `}
-
-    ${bmi < 30 ? `
-    <!-- Serratus lines (ribs) -->
-    <path d="M ${cx - ch + 8},${ribY - 6}  L ${cx - wa - 2},${ribY + 2}" fill="none" stroke="${fc}" stroke-width=".5"/>
-    <path d="M ${cx - ch + 10},${ribY + 4} L ${cx - wa},${ribY + 12}" fill="none" stroke="${fc}" stroke-width=".5"/>
-    <path d="M ${cx + ch - 8},${ribY - 6}  L ${cx + wa + 2},${ribY + 2}" fill="none" stroke="${fc}" stroke-width=".5"/>
-    <path d="M ${cx + ch - 10},${ribY + 4} L ${cx + wa},${ribY + 12}" fill="none" stroke="${fc}" stroke-width=".5"/>
-
-    <!-- Abdominal lines -->
-    ${isMale && bmi < 26 ? `
-    <line x1="${cx - 14}" y1="${ribY + 22}" x2="${cx + 14}" y2="${ribY + 22}" stroke="${fc}" stroke-width=".5"/>
-    <line x1="${cx - 13}" y1="${ribY + 36}" x2="${cx + 13}" y2="${ribY + 36}" stroke="${fc}" stroke-width=".5"/>
-    <line x1="${cx - 12}" y1="${ribY + 50}" x2="${cx + 12}" y2="${ribY + 50}" stroke="${fc}" stroke-width=".5"/>
-    ` : ''}
-
-    <!-- Oblique lines -->
-    <path d="M ${cx - wa + 2},${waistY} C ${cx - wa + 6},${waistY + 12} ${cx - hi + 14},${iliac - 2} ${cx - hi + 10},${iliac + 6}" fill="none" stroke="${fc}" stroke-width=".5"/>
-    <path d="M ${cx + wa - 2},${waistY} C ${cx + wa - 6},${waistY + 12} ${cx + hi - 14},${iliac - 2} ${cx + hi - 10},${iliac + 6}" fill="none" stroke="${fc}" stroke-width=".5"/>
-
-    <!-- Iliac V-line -->
-    <path d="M ${cx - hi + 12},${iliac + 4} C ${cx - 16},${pubic - 6} ${cx - 8},${pubic + 4} ${cx - 4},${crotchY - 4}" fill="none" stroke="${fc}" stroke-width=".6"/>
-    <path d="M ${cx + hi - 12},${iliac + 4} C ${cx + 16},${pubic - 6} ${cx + 8},${pubic + 4} ${cx + 4},${crotchY - 4}" fill="none" stroke="${fc}" stroke-width=".6"/>
-    ` : ''}
-
-    <!-- Navel -->
-    <ellipse cx="${cx}" cy="${navelY}" rx="2.5" ry="3" fill="none" stroke="${lc}" stroke-width=".8"/>
-
-    ${bmi < 30 ? `
-    <!-- Deltoid separation -->
-    <path d="M ${lSj + 2},${shY + 2} C ${lSj - dR + 4},${shY + 14} ${lSj - dR + 2},${shY + 28} ${lSj - dR + 6},${shY + 38}" fill="none" stroke="${dc}" stroke-width=".6"/>
-    <path d="M ${rSj - 2},${shY + 2} C ${rSj + dR - 4},${shY + 14} ${rSj + dR - 2},${shY + 28} ${rSj + dR - 6},${shY + 38}" fill="none" stroke="${dc}" stroke-width=".6"/>
-
-    <!-- Bicep / arm centre lines -->
-    <line x1="${lSj - dR/2}" y1="${shY + 42}" x2="${lEl - 1}" y2="${elY - 6}" stroke="${fc}" stroke-width=".4"/>
-    <line x1="${rSj + dR/2}" y1="${shY + 42}" x2="${rEl + 1}" y2="${elY - 6}" stroke="${fc}" stroke-width=".4"/>
-
-    <!-- Elbow crease -->
-    <path d="M ${lEl - ua + 2},${elY + 2} Q ${lEl},${elY + 6} ${lEl + ua - 2},${elY + 2}" fill="none" stroke="${fc}" stroke-width=".5"/>
-    <path d="M ${rEl - ua + 2},${elY + 2} Q ${rEl},${elY + 6} ${rEl + ua - 2},${elY + 2}" fill="none" stroke="${fc}" stroke-width=".5"/>
-
-    <!-- Kneecap circles -->
-    <ellipse cx="${lLc}" cy="${kneeY}" rx="${kn - 4}" ry="8" fill="none" stroke="${fc}" stroke-width=".5"/>
-    <ellipse cx="${rLc}" cy="${kneeY}" rx="${kn - 4}" ry="8" fill="none" stroke="${fc}" stroke-width=".5"/>
-
-    <!-- Quad centre lines -->
-    <line x1="${lLc}" y1="${crotchY + 12}" x2="${lLc}" y2="${kneeTop - 4}" stroke="${fc}" stroke-width=".4"/>
-    <line x1="${rLc}" y1="${crotchY + 12}" x2="${rLc}" y2="${kneeTop - 4}" stroke="${fc}" stroke-width=".4"/>
-
-    <!-- Calf inner curve -->
-    <path d="M ${lLc + 2},${kneeBot + 4} C ${lLc + cf/3},${calfY - 10} ${lLc + cf/4},${calfY + 10} ${lLc + 2},${ankleY - 16}" fill="none" stroke="${fc}" stroke-width=".4"/>
-    <path d="M ${rLc - 2},${kneeBot + 4} C ${rLc - cf/3},${calfY - 10} ${rLc - cf/4},${calfY + 10} ${rLc - 2},${ankleY - 16}" fill="none" stroke="${fc}" stroke-width=".4"/>
-    ` : ''}
-
-    </g>
-
-    <!-- ═══ MEASUREMENT ANNOTATIONS ═══ -->
-    <g font-family="Inter,sans-serif" font-size="9" fill="${lc}" font-weight="500">
-      <line x1="42" y1="${headTop}" x2="42" y2="${toeY}" stroke="${fc}" stroke-width=".7" stroke-dasharray="3 3"/>
-      <line x1="36" y1="${headTop}" x2="48" y2="${headTop}" stroke="${fc}" stroke-width=".7"/>
-      <line x1="36" y1="${toeY}" x2="48" y2="${toeY}" stroke="${fc}" stroke-width=".7"/>
-      <text x="30" y="${(headTop + toeY) / 2}" text-anchor="middle"
-            transform="rotate(-90 30 ${(headTop + toeY) / 2})">${heightCm} cm</text>
-
-      <text x="458" y="${waistY}" text-anchor="middle">${weight} lbs</text>
-      <text x="458" y="${waistY + 14}" text-anchor="middle">${(weight * 0.453592).toFixed(1)} kg</text>
-
-      <rect x="${cx - 38}" y="${toeY + 12}" width="76" height="22" rx="11"
-            fill="${bmiCat.color}" fill-opacity=".18" stroke="${bmiCat.color}" stroke-width=".8" stroke-opacity=".4"/>
-      <text x="${cx}" y="${toeY + 27}" text-anchor="middle"
-            fill="${bmiCat.color}" font-size="10" font-weight="700">${bmiCat.text} · ${bmi.toFixed(1)}</text>
-    </g>
-    `;
+    // Responsive resize
+    const resizeObs = new ResizeObserver(() => {
+        const nw = container.clientWidth;
+        const nh = container.clientHeight || 520;
+        bodyCamera.aspect = nw / nh;
+        bodyCamera.updateProjectionMatrix();
+        bodyRenderer.setSize(nw, nh);
+    });
+    resizeObs.observe(container);
 }
 
 /* ════════════════════════════════════════════════

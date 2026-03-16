@@ -90,6 +90,39 @@ function handleSignup(event) {
     window.location.href = 'dashboard.html';
 }
 
+// Import data on login page (uses importAllData from app.js if available, else inline)
+function importOnLogin(event) {
+    const file = event.target.files[0];
+    if (!file || !file.name.endsWith('.json')) {
+        alert('Please select a valid .json backup file.');
+        event.target.value = '';
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (typeof data !== 'object' || data === null || Array.isArray(data)) throw new Error('Invalid format');
+            const keys = Object.keys(data).filter(k => k.startsWith('fitforge_'));
+            if (keys.length === 0) throw new Error('No FitForge data found');
+            if (!confirm('Import ' + keys.length + ' data entries? Existing data with same keys will be overwritten.')) {
+                event.target.value = '';
+                return;
+            }
+            keys.forEach(key => {
+                const val = data[key];
+                localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+            });
+            alert('Data imported successfully! You can now log in with your existing credentials.');
+            location.reload();
+        } catch (err) {
+            alert('Import failed: ' + err.message);
+        }
+        event.target.value = '';
+    };
+    reader.readAsText(file);
+}
+
 // Check authentication on page load
 document.addEventListener('DOMContentLoaded', function() {
     // Set default time

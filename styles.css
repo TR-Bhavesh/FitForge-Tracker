@@ -730,14 +730,30 @@ input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); }
 }
 .body-display {
     display:flex; justify-content:center; align-items:center;
-    border-radius:var(--radius); padding:30px; min-height:520px;
+    border-radius:var(--radius); padding:0; min-height:520px;
     position:relative; overflow:hidden;
-    background: radial-gradient(ellipse at center, rgba(124,58,237,.08), transparent 70%);
+    background: radial-gradient(ellipse at center, rgba(30,30,40,.9), rgba(11,15,26,1) 70%);
     border:1px solid var(--border);
 }
-#bodyCanvas {
-    max-width:100%; height:auto;
-    filter: drop-shadow(0 0 30px var(--neon-glow));
+#bodyCanvas3D {
+    width:100% !important; height:100% !important;
+    min-height:520px; display:block; border-radius:var(--radius);
+}
+.body-overlay-info {
+    position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+    display:flex; gap:12px; align-items:center; z-index:10;
+    pointer-events:none;
+}
+.body-overlay-info .bmi-badge-3d {
+    padding:6px 18px; border-radius:20px; font-weight:700;
+    font-size:.82rem; font-family:var(--font);
+    backdrop-filter:blur(8px);
+}
+.body-overlay-info .weight-badge-3d {
+    padding:6px 14px; border-radius:20px; font-weight:600;
+    font-size:.78rem; font-family:var(--font);
+    background:rgba(255,255,255,.08); color:var(--text-secondary);
+    backdrop-filter:blur(8px);
 }
 .body-stats { display:flex; flex-direction:column; gap:16px; }
 .body-stats h3 { font-size:1.4rem; font-weight:700; margin-bottom:8px; }
@@ -1156,6 +1172,55 @@ input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); }
 .sets-table td {
     padding:8px 12px; border-bottom:1px solid rgba(255,255,255,.03);
     vertical-align:middle;
+}
+
+/* ── Data Management ────────────────────────── */
+.data-mgmt-desc {
+    color: var(--text-muted); font-size: .9rem; margin-bottom: 20px; line-height: 1.5;
+}
+.data-mgmt-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+}
+.data-mgmt-card {
+    background: rgba(255,255,255,.04); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px; text-align: center;
+    transition: border-color .25s, background .25s;
+}
+.data-mgmt-card:hover {
+    border-color: var(--neon); background: rgba(255,255,255,.06);
+}
+.data-mgmt-icon {
+    font-size: 2.2rem; margin-bottom: 12px;
+}
+.data-mgmt-card h4 {
+    font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;
+}
+.data-mgmt-card p {
+    font-size: .85rem; color: var(--text-muted); margin-bottom: 18px; line-height: 1.4;
+}
+.data-mgmt-card .btn {
+    width: 100%; padding: 10px 0;
+}
+.import-status {
+    margin-top: 16px; padding: 14px 18px; border-radius: 10px;
+    background: rgba(52,211,153,.08); border: 1px solid rgba(52,211,153,.25);
+    color: var(--emerald); font-size: .9rem;
+}
+.import-status.hidden { display: none; }
+
+.data-import-login {
+    margin-top: 20px; padding-top: 18px;
+    border-top: 1px solid var(--border); text-align: center;
+}
+.data-import-login p {
+    font-size: .85rem; color: var(--text-muted);
+}
+.data-import-login a {
+    color: var(--neon); text-decoration: none; font-weight: 600;
+}
+.data-import-login a:hover { text-decoration: underline; }
+@media (max-width: 768px) {
+    .data-mgmt-grid { grid-template-columns: 1fr; }
 }
 .sets-table input {
     width:80px; padding:8px 10px;

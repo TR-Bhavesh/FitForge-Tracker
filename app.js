@@ -253,6 +253,106 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
+// ── Export all FitForge data ──────────────────
+function exportAllData() {
+    const exportObj = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('fitforge_')) {
+            try {
+                exportObj[key] = JSON.parse(localStorage.getItem(key));
+            } catch {
+                exportObj[key] = localStorage.getItem(key);
+            }
+        }
+    }
+
+    const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fitforge-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showNotification('Data exported successfully!', 'success');
+}
+
+// ── Import FitForge data ─────────────────────
+function importAllData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const statusEl = document.getElementById('importStatus');
+
+    if (!file.name.endsWith('.json')) {
+        showNotification('Please select a valid .json file', 'error');
+        event.target.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+
+            // Validate: must be an object with fitforge_ keys
+            if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+                throw new Error('Invalid format');
+            }
+
+            const keys = Object.keys(data);
+            const fitforgeKeys = keys.filter(k => k.startsWith('fitforge_'));
+            if (fitforgeKeys.length === 0) {
+                throw new Error('No FitForge data found in file');
+            }
+
+            // Confirm before overwriting
+            const proceed = confirm(
+                'This will import ' + fitforgeKeys.length + ' data entries.\n' +
+                'Existing data with the same keys will be overwritten.\n\n' +
+                'Continue?'
+            );
+            if (!proceed) {
+                event.target.value = '';
+                return;
+            }
+
+            let imported = 0;
+            fitforgeKeys.forEach(key => {
+                const val = data[key];
+                localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+                imported++;
+            });
+
+            if (statusEl) {
+                statusEl.classList.remove('hidden');
+                statusEl.innerHTML = '✅ Imported <strong>' + imported + '</strong> data entries successfully.';
+            }
+
+            showNotification('Data imported! Refreshing…', 'success');
+
+            // Re-login with imported current user if available
+            const importedUser = data['fitforge_current_user'];
+            if (importedUser) {
+                localStorage.setItem('fitforge_current_user', JSON.stringify(importedUser));
+            }
+
+            setTimeout(() => location.reload(), 1200);
+        } catch (err) {
+            showNotification('Import failed: ' + err.message, 'error');
+            if (statusEl) {
+                statusEl.classList.remove('hidden');
+                statusEl.innerHTML = '❌ Import failed: ' + err.message;
+            }
+        }
+        event.target.value = '';
+    };
+    reader.readAsText(file);
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     if (window.location.pathname.includes('dashboard.html') || 
