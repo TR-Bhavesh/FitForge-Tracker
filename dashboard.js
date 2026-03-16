@@ -39,6 +39,7 @@ function drawVitruvianBody() {
     if (bodyRenderer) {
         bodyRenderer.dispose();
         if (bodyControls) bodyControls.dispose();
+        bodyControls = null;
     }
 
     // Scene
@@ -58,14 +59,18 @@ function drawVitruvianBody() {
     bodyRenderer.toneMapping = THREE.ACESFilmicToneMapping;
     bodyRenderer.toneMappingExposure = 1.1;
 
-    // Orbit controls
-    bodyControls = new THREE.OrbitControls(bodyCamera, canvas);
-    bodyControls.enableDamping = true;
-    bodyControls.dampingFactor = 0.08;
-    bodyControls.enablePan = false;
-    bodyControls.minDistance = 3;
-    bodyControls.maxDistance = 10;
-    bodyControls.target.set(0, 0.9, 0);
+    // Orbit controls (with fallback if OrbitControls CDN fails)
+    try {
+        bodyControls = new THREE.OrbitControls(bodyCamera, canvas);
+        bodyControls.enableDamping = true;
+        bodyControls.dampingFactor = 0.08;
+        bodyControls.enablePan = false;
+        bodyControls.minDistance = 3;
+        bodyControls.maxDistance = 10;
+        bodyControls.target.set(0, 0.9, 0);
+    } catch (e) {
+        bodyControls = null;
+    }
 
     // Lighting
     const amb = new THREE.AmbientLight(0xc8a55a, 0.5);
@@ -333,7 +338,7 @@ function drawVitruvianBody() {
     // Animate
     function animate() {
         requestAnimationFrame(animate);
-        bodyControls.update();
+        if (bodyControls) bodyControls.update();
 
         // Slow idle rotation
         if (bodyModel) {

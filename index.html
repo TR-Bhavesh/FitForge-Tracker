@@ -89,12 +89,45 @@
             <!-- Import Data on Login Page -->
             <div class="data-import-login">
                 <p>Switching devices? <a href="#" onclick="document.getElementById('loginImportFile').click()">Import your FitForge backup</a></p>
-                <input type="file" id="loginImportFile" accept=".json" style="display:none" onchange="importOnLogin(event)">
+                <input type="file" id="loginImportFile" accept=".json" style="display:none" onchange="handleLoginImport(event)">
             </div>
         </div>
     </div>
 
     <script src="app.js"></script>
     <script src="auth.js"></script>
+    <script>
+    function handleLoginImport(event) {
+        var file = event.target.files[0];
+        if (!file || !file.name.endsWith('.json')) {
+            alert('Please select a valid .json backup file.');
+            event.target.value = '';
+            return;
+        }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                var data = JSON.parse(e.target.result);
+                if (typeof data !== 'object' || data === null || Array.isArray(data)) throw new Error('Invalid format');
+                var keys = Object.keys(data).filter(function(k) { return k.indexOf('fitforge_') === 0; });
+                if (keys.length === 0) throw new Error('No FitForge data found in file');
+                if (!confirm('Import ' + keys.length + ' data entries? Existing data with same keys will be overwritten.')) {
+                    event.target.value = '';
+                    return;
+                }
+                keys.forEach(function(key) {
+                    var val = data[key];
+                    localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+                });
+                alert('Data imported successfully! You can now log in with your existing credentials.');
+                location.reload();
+            } catch (err) {
+                alert('Import failed: ' + err.message);
+            }
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    }
+    </script>
 </body>
 </html>
