@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Tracker - FitForge Tracker</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo"><h2>💪 FitForge</h2></div>
+            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="diet.html">Diet Tracker</a></li>
+                <li><a href="workout.html" class="active">Workout Tracker</a></li>
+                <li><a href="analytics.html">Analytics</a></li>
+            </ul>
+            <div class="nav-user">
+                <span id="userName">User</span>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>🏋️ Workout Tracker</h1>
+            <p class="subtitle">Log your exercises and track your fitness progress</p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="workout-stats">
+            <div class="stat-card">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-info">
+                    <h3 id="todayCaloriesBurned">0</h3>
+                    <p>Calories Burned Today</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏱️</div>
+                <div class="stat-info">
+                    <h3 id="todayDuration">0</h3>
+                    <p>Minutes Exercised</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💪</div>
+                <div class="stat-info">
+                    <h3 id="todayExercises">0</h3>
+                    <p>Exercises Completed</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════ LIVE SESSION ═══════════ -->
+        <div id="sessionArea">
+            <!-- Start button when idle -->
+            <div id="startSessionCard" class="section-card" style="text-align:center;">
+                <h2>🏋️ Start a Live Session</h2>
+                <p class="subtitle" style="margin-bottom:1rem;">Track exercise-by-exercise while you work out</p>
+                <button class="btn btn-start-session" onclick="startSession()">▶ Start Workout Session</button>
+            </div>
+
+            <!-- Active session banner (hidden until started) -->
+            <div id="liveSessionBanner" class="live-session-banner" style="display:none;">
+                <div class="live-session-header">
+                    <div style="display:flex;align-items:center;gap:.75rem;">
+                        <span class="live-dot"></span>
+                        <h3 style="margin:0;">Live Session</h3>
+                    </div>
+                    <span class="live-timer" id="sessionTimer">00:00</span>
+                </div>
+                <div class="live-session-controls">
+                    <span id="sessionExCount">0 exercises</span>
+                    <button class="btn btn-end-session" onclick="endSession()">⏹ End Session</button>
+                </div>
+            </div>
+
+            <!-- Add exercise to session (hidden until session started) -->
+            <div id="liveAddExercise" class="section-card" style="display:none;">
+                <h2>➕ Add Exercise</h2>
+                <div class="exercise-form">
+                    <div class="input-row">
+                        <div class="input-group search-group">
+                            <label>Exercise Name</label>
+                            <input type="text" id="exerciseSearch" placeholder="Search exercise..." oninput="searchExercise()">
+                            <div id="exerciseSuggestions" class="exercise-suggestions"></div>
+                        </div>
+                        <div class="input-group">
+                            <label>Category</label>
+                            <select id="exerciseCategory" onchange="filterExercises()">
+                                <option value="">All</option>
+                                <option value="cardio">Cardio</option>
+                                <option value="strength">Strength</option>
+                                <option value="flexibility">Flexibility</option>
+                                <option value="sports">Sports</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="addExerciseToSession()">+ Add to Session</button>
+                </div>
+            </div>
+
+            <!-- Live exercise cards rendered here -->
+            <div id="liveExerciseCards"></div>
+        </div>
+
+        <!-- Quick-log exercise (available anytime, e.g. for past dates) -->
+        <details class="section-card" id="quickLogSection">
+            <summary style="cursor:pointer;font-weight:600;font-size:1.1rem;">📝 Quick Log Exercise (without session)</summary>
+            <div class="exercise-form" style="margin-top:1rem;">
+                <div class="input-row">
+                    <div class="input-group search-group">
+                        <label>Exercise Name</label>
+                        <input type="text" id="quickExSearch" placeholder="Search exercise..." oninput="searchExerciseQuick()">
+                        <div id="quickExSuggestions" class="exercise-suggestions"></div>
+                    </div>
+                    <div class="input-group">
+                        <label>Category</label>
+                        <select id="quickExCategory" onchange="searchExerciseQuick()">
+                            <option value="">All</option>
+                            <option value="cardio">Cardio</option>
+                            <option value="strength">Strength</option>
+                            <option value="flexibility">Flexibility</option>
+                            <option value="sports">Sports</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Duration (minutes)</label>
+                        <input type="number" id="quickExDuration" placeholder="e.g., 30" min="1">
+                    </div>
+                    <div class="input-group">
+                        <label>Intensity</label>
+                        <select id="quickExIntensity">
+                            <option value="low">Low</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="quickStrengthFields" class="strength-fields hidden">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Sets</label>
+                            <input type="number" id="quickExSets" placeholder="e.g., 3" min="1">
+                        </div>
+                        <div class="input-group">
+                            <label>Reps</label>
+                            <input type="number" id="quickExReps" placeholder="e.g., 12" min="1">
+                        </div>
+                        <div class="input-group">
+                            <label>Weight (kg)</label>
+                            <input type="number" id="quickExWeight" placeholder="e.g., 60" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Notes (optional)</label>
+                    <textarea id="quickExNotes" placeholder="Add notes..." rows="2"></textarea>
+                </div>
+
+                <button class="btn btn-primary" onclick="addExercise()">Log Exercise</button>
+            </div>
+        </details>
+
+        <!-- Today's Workout -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2 id="workoutDateHeading">📅 Today's Workout</h2>
+                <div class="date-selector">
+                    <input type="date" id="workoutDate" onchange="loadWorkoutForDate()">
+                </div>
+            </div>
+
+            <div id="todayWorkouts" class="workout-list">
+                <p class="empty-message">No exercises logged yet. Start your workout!</p>
+            </div>
+        </div>
+
+        <!-- Session Summary Modal -->
+        <div id="sessionSummaryModal" class="modal" style="display:none;">
+            <div class="session-summary">
+                <h2>🏆 Session Complete!</h2>
+                <div class="session-summary-grid" id="sessionSummaryBody"></div>
+                <button class="btn btn-primary" onclick="closeSessionSummary()" style="margin-top:1.5rem;width:100%;">Done</button>
+            </div>
+        </div>
+
+        <!-- Workout Templates -->
+        <div class="section-card">
+            <h2>⚡ Quick Start Templates</h2>
+            <div class="template-grid">
+                <div class="template-card" onclick="loadTemplate('chest-triceps')">
+                    <h4>💪 Chest + Triceps</h4>
+                    <p>4 exercises • ~60 min</p>
+                    <ul>
+                        <li>Bench Press</li>
+                        <li>Incline Dumbbell Press</li>
+                        <li>Tricep Dips</li>
+                        <li>Cable Flyes</li>
+                    </ul>
+                </div>
+
+                <div class="template-card" onclick="loadTemplate('back-biceps')">
+                    <h4>💪 Back + Biceps</h4>
+                    <p>4 exercises • ~60 min</p>
+                    <ul>
+                        <li>Lat Pulldown</li>
+                        <li>Cable Rows</li>
+                        <li>Barbell Curls</li>
+                        <li>Hammer Curls</li>
+                    </ul>
+                </div>
+
+                <div class="template-card" onclick="loadTemplate('legs')">
+                    <h4>🦵 Leg Day</h4>
+                    <p>5 exercises • ~65 min</p>
+                    <ul>
+                        <li>Squats</li>
+                        <li>Leg Press</li>
+                        <li>Leg Curls</li>
+                        <li>Calf Raises</li>
+                    </ul>
+                </div>
+
+                <div class="template-card" onclick="loadTemplate('shoulders-core')">
+                    <h4>💪 Shoulders + Core</h4>
+                    <p>5 exercises • ~55 min</p>
+                    <ul>
+                        <li>Shoulder Press</li>
+                        <li>Lateral Raises</li>
+                        <li>Planks</li>
+                        <li>Bicycle Crunches</li>
+                    </ul>
+                </div>
+
+                <div class="template-card" onclick="loadTemplate('cardio')">
+                    <h4>🏃 Cardio Blast</h4>
+                    <p>3 exercises • ~45 min</p>
+                    <ul>
+                        <li>Treadmill Incline Walk</li>
+                        <li>Stationary Bike</li>
+                        <li>Jump Rope</li>
+                    </ul>
+                </div>
+
+                <div class="template-card" onclick="loadTemplate('full-body')">
+                    <h4>🔥 Full Body</h4>
+                    <p>6 exercises • ~70 min</p>
+                    <ul>
+                        <li>Deadlifts</li>
+                        <li>Bench Press</li>
+                        <li>Pull-ups</li>
+                        <li>Squats</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Tracker -->
+        <div class="section-card">
+            <h2>🚶 Daily Activity</h2>
+            <div class="activity-tracker">
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Steps Today</label>
+                        <input type="number" id="stepsToday" placeholder="e.g., 10000" oninput="updateSteps()">
+                    </div>
+                    <div class="input-group">
+                        <label>Active Minutes</label>
+                        <input type="number" id="activeMinutes" placeholder="e.g., 120" oninput="updateActiveMinutes()">
+                    </div>
+                </div>
+                <div class="activity-summary">
+                    <div class="activity-item">
+                        <p>Steps Goal</p>
+                        <h3><span id="stepsDisplay">0</span> / 10,000</h3>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="stepsProgress"></div>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <p>Active Minutes Goal</p>
+                        <h3><span id="activeDisplay">0</span> / 60 min</h3>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="activeProgress"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="workout.js"></script>
+</body>
+</html>

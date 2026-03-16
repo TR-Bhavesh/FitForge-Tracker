@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diet Tracker - FitForge Tracker</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo"><h2>💪 FitForge</h2></div>
+            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="diet.html" class="active">Diet Tracker</a></li>
+                <li><a href="workout.html">Workout Tracker</a></li>
+                <li><a href="analytics.html">Analytics</a></li>
+            </ul>
+            <div class="nav-user">
+                <span id="userName">User</span>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>🍽️ Diet Tracker</h1>
+            <p class="subtitle">Track your meals and nutrition intake</p>
+        </div>
+
+        <!-- Quick Add Food -->
+        <div class="section-card">
+            <h2>➕ Add Food</h2>
+            <div class="add-food-section">
+                <div class="input-row">
+                    <div class="input-group search-group">
+                        <label>Search Food</label>
+                        <input type="text" id="foodSearch" placeholder="Search for food..." oninput="searchFood()">
+                        <div id="foodSuggestions" class="food-suggestions"></div>
+                    </div>
+                    <div class="input-group">
+                        <label>Meal Type</label>
+                        <select id="mealType">
+                            <option value="breakfast">Breakfast</option>
+                            <option value="lunch">Lunch</option>
+                            <option value="dinner">Dinner</option>
+                            <option value="snack">Snack</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Quantity/Servings</label>
+                        <input type="number" id="foodQuantity" value="1" min="0.1" step="0.1">
+                    </div>
+                    <div class="input-group">
+                        <label>Time</label>
+                        <input type="time" id="mealTime" value="">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="addFood()">Add to Today's Log</button>
+            </div>
+
+            <!-- Custom Food -->
+            <div class="custom-food-toggle">
+                <button class="btn btn-secondary" onclick="toggleCustomFood()">+ Add Custom Food</button>
+            </div>
+            
+            <div id="customFoodForm" class="custom-food-form hidden">
+                <h3>Custom Food Entry</h3>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Food Name</label>
+                        <input type="text" id="customFoodName" placeholder="e.g., Homemade Curry">
+                    </div>
+                    <div class="input-group">
+                        <label>Serving Size</label>
+                        <input type="text" id="customServingSize" placeholder="e.g., 1 cup">
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Calories</label>
+                        <input type="number" id="customCalories" placeholder="e.g., 250">
+                    </div>
+                    <div class="input-group">
+                        <label>Protein (g)</label>
+                        <input type="number" id="customProtein" placeholder="e.g., 15">
+                    </div>
+                    <div class="input-group">
+                        <label>Carbs (g)</label>
+                        <input type="number" id="customCarbs" placeholder="e.g., 30">
+                    </div>
+                    <div class="input-group">
+                        <label>Fat (g)</label>
+                        <input type="number" id="customFat" placeholder="e.g., 10">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="addCustomFood()">Add Custom Food</button>
+            </div>
+        </div>
+
+        <!-- Day-wise Date Tracker -->
+        <div class="section-card">
+            <div id="dateStripLabel" class="date-strip-label">This Week</div>
+            <div class="date-strip">
+                <button class="date-strip-nav" onclick="shiftWeek(-1)" title="Previous week">‹</button>
+                <div id="dateStripDays" class="date-strip-days">
+                    <!-- JS will render 7 day pills here -->
+                </div>
+                <button class="date-strip-nav" onclick="shiftWeek(1)" title="Next week">›</button>
+            </div>
+            <!-- hidden date input kept for JS compatibility -->
+            <input type="date" id="dietDate" style="display:none" onchange="loadDietForDate()">
+        </div>
+
+        <!-- Today's Meals -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2 id="mealsDateHeading">📅 Meals Log</h2>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="nutrition-summary">
+                <div class="nutrition-card">
+                    <h3 id="totalCaloriesToday">0</h3>
+                    <p>Calories</p>
+                </div>
+                <div class="nutrition-card">
+                    <h3 id="totalProteinToday">0g</h3>
+                    <p>Protein</p>
+                </div>
+                <div class="nutrition-card">
+                    <h3 id="totalCarbsToday">0g</h3>
+                    <p>Carbs</p>
+                </div>
+                <div class="nutrition-card">
+                    <h3 id="totalFatToday">0g</h3>
+                    <p>Fat</p>
+                </div>
+            </div>
+
+            <!-- Meals List -->
+            <div class="meals-container">
+                <div class="meal-section">
+                    <h3>🌅 Breakfast</h3>
+                    <div id="breakfastMeals" class="meal-items">
+                        <p class="empty-message">No meals logged yet</p>
+                    </div>
+                </div>
+
+                <div class="meal-section">
+                    <h3>🌞 Lunch</h3>
+                    <div id="lunchMeals" class="meal-items">
+                        <p class="empty-message">No meals logged yet</p>
+                    </div>
+                </div>
+
+                <div class="meal-section">
+                    <h3>🌙 Dinner</h3>
+                    <div id="dinnerMeals" class="meal-items">
+                        <p class="empty-message">No meals logged yet</p>
+                    </div>
+                </div>
+
+                <div class="meal-section">
+                    <h3>🍎 Snacks</h3>
+                    <div id="snackMeals" class="meal-items">
+                        <p class="empty-message">No meals logged yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Water Tracker -->
+        <div class="section-card">
+            <h2>💧 Water Tracker</h2>
+            <div class="water-tracker">
+                <div class="water-buttons">
+                    <button class="btn btn-water" onclick="addWater(250)">+ 250ml</button>
+                    <button class="btn btn-water" onclick="addWater(500)">+ 500ml</button>
+                    <button class="btn btn-water" onclick="addWater(750)">+ 750ml</button>
+                    <button class="btn btn-water" onclick="addWater(1000)">+ 1L</button>
+                </div>
+                <div class="water-display">
+                    <h3 id="waterTotal">0 ml</h3>
+                    <p>Today's Water Intake</p>
+                    <div class="water-progress-bar">
+                        <div class="water-fill" id="waterFill"></div>
+                    </div>
+                    <p class="water-goal">Goal: 4000 ml</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meal Combinations Quick Add -->
+        <div class="section-card">
+            <h2>⚡ Quick Meal Combos</h2>
+            <div class="combo-grid">
+                <div class="combo-card" onclick="addCombo('rice-dal')">
+                    <h4>🍛 Rice + Dal + Raita</h4>
+                    <p>~340 cal</p>
+                </div>
+                <div class="combo-card" onclick="addCombo('roti-sabzi')">
+                    <h4>🫓 3 Roti + Aloo Gobi</h4>
+                    <p>~353 cal</p>
+                </div>
+                <div class="combo-card" onclick="addCombo('dosa-sambar')">
+                    <h4>🥞 Masala Dosa + Sambar</h4>
+                    <p>~425 cal</p>
+                </div>
+                <div class="combo-card" onclick="addCombo('idli-sambar')">
+                    <h4>🫕 3 Idli + Sambar</h4>
+                    <p>~262 cal</p>
+                </div>
+                <div class="combo-card" onclick="addCombo('chicken-rice')">
+                    <h4>🍗 Chicken + Brown Rice</h4>
+                    <p>~408 cal</p>
+                </div>
+                <div class="combo-card" onclick="addCombo('protein-shake')">
+                    <h4>🥤 Protein + Banana + Oats</h4>
+                    <p>~300 cal</p>
+                </div>
+                <div class="combo-card" onclick="addCombo('eggs-toast')">
+                    <h4>🍳 Omelette + Toast + OJ</h4>
+                    <p>~462 cal</p>
+                </div>
+                <div class="combo-card" onclick="addCombo('butter-chicken')">
+                    <h4>🧈 Butter Chicken + Naan</h4>
+                    <p>~1060 cal</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Meal Modal -->
+        <div id="editMealModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>✏️ Edit Meal</h2>
+                    <button class="modal-close" onclick="closeEditMeal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editMealId">
+                    <div class="input-group">
+                        <label>Food Name</label>
+                        <input type="text" id="editFoodName" readonly>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Quantity / Servings</label>
+                            <input type="number" id="editQuantity" min="0.1" step="0.1">
+                        </div>
+                        <div class="input-group">
+                            <label>Meal Type</label>
+                            <select id="editMealType">
+                                <option value="breakfast">Breakfast</option>
+                                <option value="lunch">Lunch</option>
+                                <option value="dinner">Dinner</option>
+                                <option value="snack">Snack</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Calories (per serving)</label>
+                            <input type="number" id="editCalories" min="0">
+                        </div>
+                        <div class="input-group">
+                            <label>Time</label>
+                            <input type="time" id="editTime">
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Protein (g)</label><input type="number" id="editProtein" min="0"></div>
+                        <div class="input-group"><label>Carbs (g)</label><input type="number" id="editCarbs" min="0"></div>
+                        <div class="input-group"><label>Fat (g)</label><input type="number" id="editFat" min="0"></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveEditedMeal()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="diet.js"></script>
+</body>
+</html>

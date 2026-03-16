@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Analytics - FitForge Tracker</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo"><h2>💪 FitForge</h2></div>
+            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="diet.html">Diet Tracker</a></li>
+                <li><a href="workout.html">Workout Tracker</a></li>
+                <li><a href="analytics.html" class="active">Analytics</a></li>
+            </ul>
+            <div class="nav-user">
+                <span id="userName">User</span>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>📊 Analytics Dashboard</h1>
+            <p class="subtitle">Track your progress over time</p>
+        </div>
+
+        <!-- Time Range -->
+        <div class="section-card">
+            <div class="time-range-selector">
+                <button class="btn-range active" data-range="7days" onclick="changeRange('7days', this)">7 Days</button>
+                <button class="btn-range" data-range="30days" onclick="changeRange('30days', this)">30 Days</button>
+                <button class="btn-range" data-range="90days" onclick="changeRange('90days', this)">90 Days</button>
+                <button class="btn-range" data-range="all" onclick="changeRange('all', this)">All Time</button>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="analytics-summary">
+            <div class="summary-card"><h4>Weight Change</h4><h2 id="weightChange">0 lbs</h2><p class="change-indicator" id="weightChangeText">No data</p></div>
+            <div class="summary-card"><h4>Avg Daily Calories</h4><h2 id="avgCalories">0</h2><p>kcal/day</p></div>
+            <div class="summary-card"><h4>Total Workouts</h4><h2 id="totalWorkouts">0</h2><p>sessions</p></div>
+            <div class="summary-card"><h4>Streak</h4><h2 id="streak">0</h2><p>days</p></div>
+            <div class="summary-card"><h4>Avg Burned/Day</h4><h2 id="avgBurned">0</h2><p>kcal/day</p></div>
+            <div class="summary-card"><h4>Consistency</h4><h2 id="consistency">0%</h2><p>active days</p></div>
+        </div>
+
+        <!-- Weight Chart -->
+        <div class="section-card">
+            <h2>⚖️ Weight Tracking</h2>
+            <div class="weight-input-section">
+                <div class="input-row">
+                    <div class="input-group"><label>Weight (lbs)</label><input type="number" id="currentWeight" placeholder="e.g., 180" step="0.1"></div>
+                    <div class="input-group"><label>Date</label><input type="date" id="weightDate"></div>
+                    <div><label style="visibility:hidden;display:block;margin-bottom:8px;font-size:.85rem">_</label><button class="btn btn-primary" onclick="logWeight()" style="width:100%">Log Weight</button></div>
+                </div>
+            </div>
+            <div class="chart-container"><canvas id="weightChart"></canvas></div>
+        </div>
+
+        <!-- Calorie Chart -->
+        <div class="section-card">
+            <h2>🔥 Calorie Tracking</h2>
+            <div class="chart-container"><canvas id="calorieChart"></canvas></div>
+        </div>
+
+        <!-- PROJECTIONS -->
+        <div class="section-card">
+            <h2>🔮 Projections & Predictions</h2>
+            <p class="subtitle" style="margin-bottom:20px">Based on your current trends</p>
+            <div class="projection-tabs">
+                <button class="btn-range active" onclick="changeProjection('1m', this)">1 Month</button>
+                <button class="btn-range" onclick="changeProjection('3m', this)">3 Months</button>
+                <button class="btn-range" onclick="changeProjection('6m', this)">6 Months</button>
+                <button class="btn-range" onclick="changeProjection('1y', this)">1 Year</button>
+                <button class="btn-range" onclick="changeProjection('2y', this)">2 Years</button>
+            </div>
+            <div class="projection-grid" id="projectionGrid">
+                <div class="projection-card"><h4>Projected Weight</h4><h2 id="projWeight">—</h2><p id="projWeightDelta"></p></div>
+                <div class="projection-card"><h4>Projected BMI</h4><h2 id="projBMI">—</h2><p id="projBMICategory"></p></div>
+                <div class="projection-card"><h4>Projected Body Fat</h4><h2 id="projBF">—</h2><p id="projBFDelta"></p></div>
+                <div class="projection-card"><h4>Calories Burned (total)</h4><h2 id="projCalsBurned">—</h2><p>estimated</p></div>
+            </div>
+            <div class="chart-container" style="margin-top:20px"><canvas id="projectionChart"></canvas></div>
+        </div>
+
+        <!-- Workout Analysis -->
+        <div class="section-card">
+            <h2>💪 Workout Analysis</h2>
+            <div class="analysis-grid">
+                <div class="chart-half"><h3>Exercise Distribution</h3><canvas id="exerciseDistribution"></canvas></div>
+                <div class="chart-half"><h3>Calories Burned</h3><canvas id="caloriesBurnedChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Nutrition -->
+        <div class="section-card">
+            <h2>🥗 Nutrition Breakdown</h2>
+            <div class="analysis-grid">
+                <div class="chart-half"><h3>Macro Average</h3><canvas id="macroChart"></canvas></div>
+                <div class="chart-half"><h3>Daily Protein</h3><canvas id="proteinChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Calorie Balance -->
+        <div class="section-card">
+            <h2>📉 Calorie Balance (Net)</h2>
+            <div class="chart-container"><canvas id="netCalorieChart"></canvas></div>
+        </div>
+
+        <!-- Workout Frequency -->
+        <div class="section-card">
+            <h2>📅 Workout Frequency</h2>
+            <div class="chart-container"><canvas id="workoutFreqChart"></canvas></div>
+        </div>
+
+        <!-- Milestones -->
+        <div class="section-card">
+            <h2>🏆 Milestones & Achievements</h2>
+            <div class="milestones-grid" id="milestonesContainer"></div>
+        </div>
+
+        <!-- Weekly Summary -->
+        <div class="section-card">
+            <h2>📅 Weekly Summary</h2>
+            <div class="weekly-calendar" id="weeklyCalendar"></div>
+        </div>
+
+        <!-- Export -->
+        <div class="section-card">
+            <h2>📥 Export Your Data</h2>
+            <p>Download all your fitness data for backup or analysis</p>
+            <div class="export-buttons">
+                <button class="btn btn-secondary" onclick="exportData('json')">Export JSON</button>
+                <button class="btn btn-secondary" onclick="exportData('csv')">Export CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="analytics.js"></script>
+</body>
+</html>

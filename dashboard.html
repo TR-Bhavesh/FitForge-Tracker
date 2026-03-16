@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard - FitForge Tracker</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo"><h2>💪 FitForge</h2></div>
+            <button class="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="dashboard.html" class="active">Dashboard</a></li>
+                <li><a href="diet.html">Diet Tracker</a></li>
+                <li><a href="workout.html">Workout Tracker</a></li>
+                <li><a href="analytics.html">Analytics</a></li>
+            </ul>
+            <div class="nav-user">
+                <span id="userName">User</span>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="welcome-section">
+            <h1>Welcome back, <span id="userNameMain">User</span>! 🎯</h1>
+            <p class="subtitle">Let's crush your fitness goals today</p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-info">
+                    <h3 id="todayCalories">0</h3>
+                    <p>Net Calories</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-info">
+                    <h3 id="caloriesBurned">0</h3>
+                    <p>Calories Burned</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💧</div>
+                <div class="stat-info">
+                    <h3 id="waterIntake">0</h3>
+                    <p>Water (ml)</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔥</div>
+                <div class="stat-info">
+                    <h3 id="streakDays">0</h3>
+                    <p>Day Streak</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fitness Score -->
+        <div class="section-card">
+            <h2>🏆 Today's Fitness Score</h2>
+            <div class="fitness-score-section">
+                <div class="score-ring-container">
+                    <svg viewBox="0 0 200 200" class="score-ring-svg">
+                        <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="12"/>
+                        <circle cx="100" cy="100" r="85" fill="none" stroke="url(#scoreGrad)" stroke-width="12"
+                                stroke-linecap="round" stroke-dasharray="534" stroke-dashoffset="534"
+                                id="scoreArc" transform="rotate(-90 100 100)"/>
+                        <defs><linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#818cf8"/><stop offset="100%" stop-color="#34d399"/>
+                        </linearGradient></defs>
+                        <text x="100" y="92" text-anchor="middle" fill="#f1f5f9" font-size="42" font-weight="800" font-family="Inter, sans-serif" id="scoreText">0</text>
+                        <text x="100" y="116" text-anchor="middle" fill="#94a3b8" font-size="12" font-family="Inter, sans-serif">/ 100</text>
+                    </svg>
+                </div>
+                <div class="score-details">
+                    <div class="score-factor"><span>🍽️ Nutrition</span><div class="mini-bar"><div class="mini-fill" id="scoreNutrition"></div></div><span id="scoreNutVal">0</span></div>
+                    <div class="score-factor"><span>🏋️ Exercise</span><div class="mini-bar"><div class="mini-fill emerald" id="scoreExercise"></div></div><span id="scoreExVal">0</span></div>
+                    <div class="score-factor"><span>💧 Hydration</span><div class="mini-bar"><div class="mini-fill sky" id="scoreHydration"></div></div><span id="scoreHydVal">0</span></div>
+                    <div class="score-factor"><span>📊 Consistency</span><div class="mini-bar"><div class="mini-fill amber" id="scoreConsistency"></div></div><span id="scoreConVal">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vitruvian Body Visualization -->
+        <div class="section-card">
+            <h2>🧍 Body Visualization</h2>
+            <div class="body-visualization">
+                <div class="body-display" id="bodyDisplayContainer">
+                    <svg id="vitruvianSVG" viewBox="0 0 500 550" xmlns="http://www.w3.org/2000/svg"></svg>
+                </div>
+                <div class="body-stats">
+                    <h3>Your Body Stats</h3>
+                    <div class="stat-row"><span>Weight</span><strong id="displayWeight">0 lbs</strong></div>
+                    <div class="stat-row"><span>Height</span><strong id="displayHeight">0 cm</strong></div>
+                    <div class="stat-row"><span>BMI</span><strong id="displayBMI">0</strong></div>
+                    <div class="stat-row"><span>Body Type</span><strong id="displayBodyType">Normal</strong></div>
+                    <div class="stat-row"><span>Body Fat (est.)</span><strong id="displayBodyFat">—</strong></div>
+                    <div class="stat-row"><span>BMR</span><strong id="displayBMR">— kcal</strong></div>
+                    <div class="stat-row"><span>TDEE</span><strong id="displayTDEE">— kcal</strong></div>
+                    <div class="stat-row"><span>Ideal Weight</span><strong id="displayIdealWeight">—</strong></div>
+                    <button class="btn btn-secondary" onclick="openProfileUpdate()" style="margin-top:20px; width:100%;">Update Profile</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Update Modal -->
+        <div id="profileModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>👤 Update Profile</h2>
+                    <button class="modal-close" onclick="closeProfileUpdate()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-row">
+                        <div class="input-group"><label>Weight (lbs)</label><input type="number" id="updateWeight" step="0.1" placeholder="e.g., 180"></div>
+                        <div class="input-group"><label>Height (cm)</label><input type="number" id="updateHeight" placeholder="e.g., 175"></div>
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group"><label>Age</label><input type="number" id="updateAge" placeholder="e.g., 25"></div>
+                        <div class="input-group"><label>Gender</label>
+                            <select id="updateGender"><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>
+                        </div>
+                    </div>
+                    <div class="input-group"><label>Activity Level</label>
+                        <select id="updateActivity">
+                            <option value="1.2">Sedentary</option><option value="1.375">Lightly active</option>
+                            <option value="1.55">Moderately active</option><option value="1.725">Very active</option><option value="1.9">Extra active</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveProfileUpdate()">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BMI Calculator -->
+        <div class="section-card">
+            <h2>📊 BMI Calculator</h2>
+            <div class="bmi-calculator">
+                <div class="input-row">
+                    <div class="input-group"><label>Weight (lbs)</label><input type="number" id="bmiWeight" placeholder="e.g., 180"></div>
+                    <div class="input-group"><label>Height (inches)</label><input type="number" id="bmiHeight" placeholder="e.g., 70"></div>
+                </div>
+                <button class="btn btn-primary" onclick="calculateBMI()">Calculate BMI</button>
+                <div id="bmiResult" class="bmi-result hidden">
+                    <div class="bmi-value">
+                        <h3>Your BMI: <span id="bmiValue">0</span></h3>
+                        <p class="bmi-category" id="bmiCategory">Normal Weight</p>
+                    </div>
+                    <div class="bmi-chart">
+                        <div class="bmi-bar"><div class="bmi-indicator" id="bmiIndicator"></div></div>
+                        <div class="bmi-labels"><span>Underweight</span><span>Normal</span><span>Overweight</span><span>Obese</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calorie & Macro Goals -->
+        <div class="section-card">
+            <h2>🎯 Daily Calorie & Macro Goals</h2>
+            <div class="calorie-calculator">
+                <div class="input-row">
+                    <div class="input-group"><label>Activity Level</label>
+                        <select id="activityLevel">
+                            <option value="1.2">Sedentary (little or no exercise)</option>
+                            <option value="1.375">Lightly active (1-3 days/week)</option>
+                            <option value="1.55">Moderately active (3-5 days/week)</option>
+                            <option value="1.725">Very active (6-7 days/week)</option>
+                            <option value="1.9">Extra active (athlete level)</option>
+                        </select>
+                    </div>
+                    <div class="input-group"><label>Goal</label>
+                        <select id="calorieGoal">
+                            <option value="-500">Weight Loss (0.5 kg/week)</option>
+                            <option value="-750">Aggressive Loss (0.75 kg/week)</option>
+                            <option value="0">Maintain Weight</option>
+                            <option value="300">Lean Bulk (+300)</option>
+                            <option value="500">Muscle Gain (+500)</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="calculateCalories()">Calculate Daily Goals</button>
+                <div id="calorieResult" class="calorie-result hidden">
+                    <div class="calorie-breakdown">
+                        <div class="calorie-item"><h4>Daily Calories</h4><h3 id="dailyCalories">0</h3></div>
+                        <div class="calorie-item"><h4>Protein (g)</h4><h3 id="proteinGoal">0</h3></div>
+                        <div class="calorie-item"><h4>Carbs (g)</h4><h3 id="carbsGoal">0</h3></div>
+                        <div class="calorie-item"><h4>Fats (g)</h4><h3 id="fatsGoal">0</h3></div>
+                    </div>
+                </div>
+                <!-- Burn Estimator -->
+                <div class="burn-estimator">
+                    <h3>🔥 Estimate Calories Burned</h3>
+                    <div class="burn-grid">
+                        <div class="input-group"><label>Activity</label>
+                            <select id="burnActivity">
+                                <option value="walking-3.5">Walking</option><option value="jogging-7">Jogging</option>
+                                <option value="running-10">Running</option><option value="cycling-7">Cycling</option>
+                                <option value="swimming-8">Swimming</option><option value="gym-5">Weight Training</option>
+                                <option value="basketball-8">Basketball</option><option value="cricket-5">Cricket</option>
+                                <option value="yoga-3">Yoga</option><option value="hiit-12">HIIT</option>
+                                <option value="boxing-9">Boxing</option><option value="dance-6.5">Dancing</option>
+                            </select>
+                        </div>
+                        <div class="input-group"><label>Duration (min)</label><input type="number" id="burnDuration" placeholder="30" min="1"></div>
+                        <div><label style="visibility:hidden;display:block;margin-bottom:8px;font-size:.85rem">_</label><button class="btn btn-secondary" onclick="estimateCalorieBurn()" style="width:100%">Estimate</button></div>
+                    </div>
+                    <div id="burnResult" class="burn-result hidden">
+                        <h4 id="burnCalories">0</h4><p>estimated calories burned</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Progress -->
+        <div class="section-card">
+            <h2>📈 Today's Progress</h2>
+            <div class="progress-container">
+                <div class="progress-item">
+                    <div class="progress-header"><span>Calorie Intake</span><span><span id="caloriesEaten">0</span> / <span id="calorieTarget">2000</span> kcal</span></div>
+                    <div class="progress-bar"><div class="progress-fill" id="calorieProgress" style="width:0%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-header"><span>Calories Burned</span><span><span id="burnedDisplay">0</span> kcal</span></div>
+                    <div class="progress-bar"><div class="progress-fill" id="burnedProgress" style="width:0%;background:linear-gradient(135deg,var(--rose),#e11d48)"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-header"><span>Water Intake</span><span><span id="waterConsumed">0</span> / 4000 ml</span></div>
+                    <div class="progress-bar"><div class="progress-fill water" id="waterProgress" style="width:0%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-header"><span>Protein</span><span><span id="proteinEaten">0</span> / <span id="proteinTarget">150</span> g</span></div>
+                    <div class="progress-bar"><div class="progress-fill protein" id="proteinProgress" style="width:0%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-header"><span>Workout Time</span><span><span id="workoutTime">0</span> min</span></div>
+                    <div class="progress-bar"><div class="progress-fill" id="workoutProgress" style="width:0%;background:linear-gradient(135deg,var(--emerald),#059669)"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section-card">
+            <h2>⚡ Quick Actions</h2>
+            <div class="quick-actions-grid">
+                <a href="diet.html" class="quick-action-card"><div class="qa-icon">🍽️</div><span>Log Meal</span></a>
+                <a href="workout.html" class="quick-action-card"><div class="qa-icon">🏋️</div><span>Start Workout</span></a>
+                <a href="analytics.html" class="quick-action-card"><div class="qa-icon">📊</div><span>View Analytics</span></a>
+                <div class="quick-action-card" onclick="openProfileUpdate()"><div class="qa-icon">👤</div><span>Update Profile</span></div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="section-card">
+            <h2>🕐 Recent Activity</h2>
+            <div id="recentActivity" class="recent-activity-list">
+                <p class="empty-message">No recent activity</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>
