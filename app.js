@@ -341,10 +341,11 @@ function importAllData(event) {
                 throw new Error('No FitForge data found in file');
             }
 
-            // Confirm before overwriting
+            // Confirm before importing
             const proceed = confirm(
                 'This will import ' + fitforgeKeys.length + ' data entries.\n' +
-                'Existing data with the same keys will be overwritten.\n\n' +
+                'Array data (meals, workouts, water) will be MERGED.\n' +
+                'Duplicates are avoided by matching entry IDs.\n\n' +
                 'Continue?'
             );
             if (!proceed) {
@@ -355,7 +356,23 @@ function importAllData(event) {
             let imported = 0;
             fitforgeKeys.forEach(key => {
                 const val = data[key];
-                localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+                // Merge arrays by id to avoid duplicates
+                if (Array.isArray(val)) {
+                    let local = [];
+                    try { local = JSON.parse(localStorage.getItem(key)) || []; } catch { local = []; }
+                    if (Array.isArray(local)) {
+                        const map = new Map();
+                        local.forEach(item => { if (item && item.id) map.set(item.id, item); });
+                        val.forEach(item => {
+                            if (item && item.id && !map.has(item.id)) map.set(item.id, item);
+                        });
+                        localStorage.setItem(key, JSON.stringify(Array.from(map.values())));
+                    } else {
+                        localStorage.setItem(key, JSON.stringify(val));
+                    }
+                } else {
+                    localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+                }
                 imported++;
             });
 

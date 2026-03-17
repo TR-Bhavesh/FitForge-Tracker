@@ -88,11 +88,48 @@ function collectAllData() {
     return data;
 }
 
-function restoreAllData(data) {
+// Merge arrays by `id` field — keeps entries from both local and remote
+function mergeArraysById(local, remote) {
+    if (!Array.isArray(local)) return remote;
+    if (!Array.isArray(remote)) return local;
+    const map = new Map();
+    local.forEach(item => { if (item && item.id) map.set(item.id, item); });
+    remote.forEach(item => {
+        if (item && item.id) {
+            // Remote wins for same id if it has a newer timestamp
+            const existing = map.get(item.id);
+            if (!existing) {
+                map.set(item.id, item);
+            } else if (item.timestamp && existing.timestamp && item.timestamp > existing.timestamp) {
+                map.set(item.id, item);
+            }
+        }
+    });
+    return Array.from(map.values()).sort((a, b) => {
+        if (a.timestamp && b.timestamp) return a.timestamp.localeCompare(b.timestamp);
+        return (a.id || 0) - (b.id || 0);
+    });
+}
+
+function restoreAllData(data, merge) {
     let count = 0;
     Object.keys(data).forEach(key => {
         if (key.startsWith('fitforge_') && key !== SYNC_CONFIG_KEY) {
-            localStorage.setItem(key, typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key]));
+            if (merge) {
+                // For array data (meals, workouts, water, weight_log, activity), merge by id
+                const incoming = data[key];
+                if (Array.isArray(incoming)) {
+                    let local = [];
+                    try { local = JSON.parse(localStorage.getItem(key)) || []; } catch { local = []; }
+                    const merged = mergeArraysById(local, incoming);
+                    localStorage.setItem(key, JSON.stringify(merged));
+                } else {
+                    // For non-array (user profiles, config), remote wins
+                    localStorage.setItem(key, typeof incoming === 'string' ? incoming : JSON.stringify(incoming));
+                }
+            } else {
+                localStorage.setItem(key, typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key]));
+            }
             count++;
         }
     });
@@ -105,17 +142,30 @@ async function syncPush() {
     if (!cfg) { showNotification('Set up sync first', 'error'); return; }
 
     const statusEl = document.getElementById('syncStatus');
-    if (statusEl) { statusEl.textContent = 'Encrypting & uploading…'; statusEl.className = 'sync-status syncing'; }
+    if (statusEl) { statusEl.textContent = 'Merging & uploading…'; statusEl.className = 'sync-status syncing'; }
 
     try {
+        const filePath = cfg.owner + '/' + cfg.repo + '/contents/' + cfg.filePath;
+
+        // Pull existing cloud data first and merge into local
+        const existing = await githubGet(filePath, cfg.token);
+        const sha = existing ? existing.sha : undefined;
+
+        if (existing && existing.content) {
+            try {
+                const b64raw = existing.content.replace(/\n/g, '');
+                const cloudEncrypted = atob(b64raw);
+                const cloudJson = await decryptData(cloudEncrypted, cfg.passphrase);
+                const cloudData = JSON.parse(cloudJson);
+                // Merge cloud into local (so local has everything)
+                restoreAllData(cloudData, true);
+            } catch (e) { /* If decrypt fails, just push local — could be first time or passphrase changed */ }
+        }
+
+        // Now collect the merged local data and push
         const allData  = collectAllData();
         const json     = JSON.stringify(allData);
         const encrypted = await encryptData(json, cfg.passphrase);
-        const filePath = cfg.owner + '/' + cfg.repo + '/contents/' + cfg.filePath;
-
-        // Get existing file SHA (for update)
-        const existing = await githubGet(filePath, cfg.token);
-        const sha = existing ? existing.sha : undefined;
 
         await githubPut(filePath, cfg.token, encrypted, sha, 'FitForge sync ' + new Date().toISOString().slice(0, 19));
 
@@ -153,7 +203,7 @@ async function syncPull() {
         const decrypted = await decryptData(encrypted, cfg.passphrase);
         const data = JSON.parse(decrypted);
 
-        const count = restoreAllData(data);
+        const count = restoreAllData(data, true); // merge mode
 
         // Re-apply current user if available
         if (data['fitforge_current_user']) {
