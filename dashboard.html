@@ -295,59 +295,61 @@
         <!-- Cloud Sync -->
         <div class="section-card">
             <h2>☁️ Cloud Sync</h2>
-            <p class="data-mgmt-desc">Sync data across all devices via your GitHub repo. Data is encrypted with AES-256 before upload — no one can read it without your passphrase.</p>
+            <p class="data-mgmt-desc">Automatic cloud sync across all devices. Your data is AES-256 encrypted — no one can read it without your passphrase. No accounts needed.</p>
             <div id="syncConfigured" class="sync-configured" style="display:none"></div>
+
             <div class="data-mgmt-grid">
                 <div class="data-mgmt-card">
-                    <div class="data-mgmt-icon">⬆️</div>
-                    <h4>Push to Cloud</h4>
-                    <p>Encrypt &amp; upload your data to GitHub</p>
-                    <button class="btn btn-primary" onclick="syncPush()">Push</button>
+                    <div class="data-mgmt-icon">🔄</div>
+                    <h4>Sync Now</h4>
+                    <p>Push &amp; pull latest data</p>
+                    <button class="btn btn-primary" onclick="syncPush(false)">Sync</button>
                 </div>
                 <div class="data-mgmt-card">
-                    <div class="data-mgmt-icon">⬇️</div>
-                    <h4>Pull from Cloud</h4>
-                    <p>Download &amp; decrypt your data from GitHub</p>
-                    <button class="btn btn-secondary" onclick="syncPull()">Pull</button>
+                    <div class="data-mgmt-icon">⚙️</div>
+                    <h4>Setup / Join</h4>
+                    <p>Enable sync or connect new device</p>
+                    <button class="btn btn-secondary" onclick="openSyncSetup()">Configure</button>
                 </div>
             </div>
             <div id="syncStatus" class="sync-status" style="display:none"></div>
-            <button class="btn btn-secondary" onclick="openSyncSetup()" style="margin-top:16px;width:100%">⚙️ Configure Sync</button>
         </div>
 
         <!-- Sync Setup Modal -->
         <div id="syncModal" class="modal hidden">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2>☁️ Sync Setup</h2>
+                    <h2>☁️ Cloud Sync Setup</h2>
                     <button class="modal-close" onclick="closeSyncSetup()">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <p style="color:var(--text-muted);font-size:.85rem;margin-bottom:16px">Enter your GitHub Personal Access Token (needs <code>repo</code> scope). Your data is encrypted locally before upload.</p>
-                    <div class="input-group">
-                        <label>GitHub Token</label>
-                        <input type="password" id="syncToken" placeholder="ghp_xxxxxxxxxxxx">
-                    </div>
-                    <div class="input-row">
-                        <div class="input-group">
-                            <label>GitHub Username</label>
-                            <input type="text" id="syncOwner" placeholder="your-username">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+                        <!-- LEFT: New sync -->
+                        <div style="border-right:1px solid rgba(255,255,255,.1);padding-right:20px">
+                            <h3 style="color:var(--emerald);margin-bottom:10px">🆕 First Device</h3>
+                            <p style="color:var(--text-muted);font-size:.82rem;margin-bottom:12px">Enable sync for the first time. You'll get a Sync Code to use on your other devices.</p>
+                            <div class="input-group">
+                                <label>Choose a Passphrase</label>
+                                <input type="password" id="syncSetupPass" placeholder="Something you'll remember">
+                            </div>
+                            <button class="btn btn-primary" onclick="enableCloudSync()" style="width:100%">Enable Cloud Sync</button>
                         </div>
-                        <div class="input-group">
-                            <label>Repository</label>
-                            <input type="text" id="syncRepo" placeholder="FitForge-Tracker">
+                        <!-- RIGHT: Join existing -->
+                        <div>
+                            <h3 style="color:var(--sky);margin-bottom:10px">🔗 Another Device</h3>
+                            <p style="color:var(--text-muted);font-size:.82rem;margin-bottom:12px">Already set up on another device? Enter the Sync Code and same passphrase.</p>
+                            <div class="input-group">
+                                <label>Sync Code</label>
+                                <input type="text" id="syncJoinCode" placeholder="Paste code from other device">
+                            </div>
+                            <div class="input-group">
+                                <label>Passphrase</label>
+                                <input type="password" id="syncJoinPass" placeholder="Same passphrase as other device">
+                            </div>
+                            <button class="btn btn-secondary" onclick="joinCloudSync()" style="width:100%">Join &amp; Sync</button>
                         </div>
                     </div>
-                    <div class="input-group">
-                        <label>File Path (in repo)</label>
-                        <input type="text" id="syncFile" value="fitforge-data.enc" placeholder="fitforge-data.enc">
-                    </div>
-                    <div class="input-group">
-                        <label>Encryption Passphrase</label>
-                        <input type="password" id="syncPass" placeholder="Strong passphrase — remember this!">
-                    </div>
-                    <p style="color:var(--rose);font-size:.8rem;margin-bottom:14px">⚠️ If you forget the passphrase, your cloud data cannot be recovered.</p>
-                    <button class="btn btn-primary" onclick="saveSyncSetup()">Save Configuration</button>
+                    <p style="color:var(--rose);font-size:.78rem;margin-top:16px;text-align:center">⚠️ Remember your passphrase — without it, cloud data cannot be decrypted.</p>
                 </div>
             </div>
         </div>

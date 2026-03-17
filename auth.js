@@ -1,4 +1,12 @@
 // Authentication functions
+
+// SHA-256 hash for password storage
+async function sha256(text) {
+    const enc = new TextEncoder();
+    const hash = await crypto.subtle.digest('SHA-256', enc.encode(text));
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 function showSignup() {
     document.getElementById('loginForm').classList.remove('active');
     document.getElementById('signupForm').classList.add('active');
@@ -9,32 +17,41 @@ function showLogin() {
     document.getElementById('loginForm').classList.add('active');
 }
 
-function handleLogin(event) {
+async function handleLogin(event) {
     event.preventDefault();
     
     const username = document.getElementById('loginUsername').value;
     const password = document.getElementById('loginPassword').value;
+    const hashed = await sha256(password);
     
-    // Get users from localStorage
     const users = JSON.parse(localStorage.getItem('fitforge_users') || '[]');
     
-    // Find user
-    const user = users.find(u => 
-        (u.username === username || u.email === username) && u.password === password
+    // Support both hashed and legacy plain-text passwords
+    let user = users.find(u => 
+        (u.username === username || u.email === username) && u.password === hashed
     );
     
+    // Fallback: check plain-text (legacy) and migrate
+    if (!user) {
+        user = users.find(u => 
+            (u.username === username || u.email === username) && u.password === password && !u.password.match(/^[a-f0-9]{64}$/)
+        );
+        if (user) {
+            // Migrate to hashed password
+            user.password = hashed;
+            localStorage.setItem('fitforge_users', JSON.stringify(users));
+        }
+    }
+    
     if (user) {
-        // Set current user
         localStorage.setItem('fitforge_current_user', JSON.stringify(user));
-        
-        // Redirect to dashboard
         window.location.href = 'dashboard.html';
     } else {
         alert('Invalid credentials. Please try again or sign up.');
     }
 }
 
-function handleSignup(event) {
+async function handleSignup(event) {
     event.preventDefault();
     
     const name = document.getElementById('signupName').value;
@@ -45,23 +62,21 @@ function handleSignup(event) {
     const gender = document.getElementById('signupGender').value;
     const height = parseFloat(document.getElementById('signupHeight').value);
     const weight = parseFloat(document.getElementById('signupWeight').value);
+    const hashed = await sha256(password);
     
-    // Get existing users
     const users = JSON.parse(localStorage.getItem('fitforge_users') || '[]');
     
-    // Check if username or email already exists
     if (users.some(u => u.username === username || u.email === email)) {
         alert('Username or email already exists. Please choose different credentials.');
         return;
     }
     
-    // Create new user
     const newUser = {
         id: Date.now(),
         name,
         email,
         username,
-        password,
+        password: hashed,
         age,
         gender,
         height,
@@ -74,19 +89,11 @@ function handleSignup(event) {
         fatsGoal: 65
     };
     
-    // Add to users array
     users.push(newUser);
-    
-    // Save to localStorage
     localStorage.setItem('fitforge_users', JSON.stringify(users));
-    
-    // Set as current user
     localStorage.setItem('fitforge_current_user', JSON.stringify(newUser));
     
-    // Show success message
     alert('Account created successfully! Welcome to FitForge!');
-    
-    // Redirect to dashboard
     window.location.href = 'dashboard.html';
 }
 
