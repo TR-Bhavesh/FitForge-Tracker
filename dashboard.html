@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <nav class="navbar">
@@ -64,6 +65,20 @@
                     <h3 id="streakDays">0</h3>
                     <p>Day Streak</p>
                 </div>
+            </div>
+        </div>
+
+        <!-- Daily Goals Checklist -->
+        <div class="section-card">
+            <h2>✅ Daily Goals</h2>
+            <div id="dailyGoalsChecklist" class="daily-goals-list"></div>
+        </div>
+
+        <!-- Weekly Overview Chart -->
+        <div class="section-card">
+            <h2>📊 Weekly Overview</h2>
+            <div style="position:relative;height:260px;">
+                <canvas id="weeklyChart"></canvas>
             </div>
         </div>
 
@@ -237,12 +252,20 @@
                     <div class="progress-bar"><div class="progress-fill" id="burnedProgress" style="width:0%;background:linear-gradient(135deg,var(--rose),#e11d48)"></div></div>
                 </div>
                 <div class="progress-item">
-                    <div class="progress-header"><span>Water Intake</span><span><span id="waterConsumed">0</span> / 4000 ml</span></div>
+                    <div class="progress-header"><span>Water Intake</span><span><span id="waterConsumed">0</span> / 3000 ml</span></div>
                     <div class="progress-bar"><div class="progress-fill water" id="waterProgress" style="width:0%"></div></div>
                 </div>
                 <div class="progress-item">
                     <div class="progress-header"><span>Protein</span><span><span id="proteinEaten">0</span> / <span id="proteinTarget">150</span> g</span></div>
                     <div class="progress-bar"><div class="progress-fill protein" id="proteinProgress" style="width:0%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-header"><span>Carbs</span><span><span id="carbsEaten">0</span> / <span id="carbsTargetDisplay">250</span> g</span></div>
+                    <div class="progress-bar"><div class="progress-fill" id="carbsProgress" style="width:0%;background:linear-gradient(135deg,#f59e0b,#d97706)"></div></div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-header"><span>Fats</span><span><span id="fatEaten">0</span> / <span id="fatTargetDisplay">65</span> g</span></div>
+                    <div class="progress-bar"><div class="progress-fill" id="fatProgress" style="width:0%;background:linear-gradient(135deg,#ec4899,#db2777)"></div></div>
                 </div>
                 <div class="progress-item">
                     <div class="progress-header"><span>Workout Time</span><span><span id="workoutTime">0</span> min</span></div>

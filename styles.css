@@ -1475,3 +1475,22 @@ details.section-card[open] summary::before { transform:rotate(90deg); }
 .flex-col { flex-direction:column; }
 .items-center { align-items:center; }
 .justify-between { justify-content:space-between; }
+
+/* ── Daily Goals Checklist ──────────────── */
+.daily-goals-list .goal-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.03);
+    margin-bottom: 6px;
+    transition: background .2s;
+}
+.daily-goals-list .goal-item.goal-done {
+    background: rgba(52,211,153,.08);
+}
+.daily-goals-list .goal-check { font-size: 1.1rem; flex-shrink: 0; }
+.daily-goals-list .goal-label { flex: 1; font-weight: 500; color: var(--text-primary); }
+.daily-goals-list .goal-detail { font-size: .85rem; color: var(--text-secondary); white-space: nowrap; }
+.daily-goals-list .goal-done .goal-label { text-decoration: line-through; opacity: .7; }

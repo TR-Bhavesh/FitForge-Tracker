@@ -209,46 +209,112 @@ const exerciseDatabase = [
 // Workout templates
 const workoutTemplates = {
     'chest-triceps': [
-        { exercise: 'Bench Press', sets: 3, reps: 10, duration: 15 },
+        { exercise: 'Bench Press', sets: 4, reps: 10, duration: 15 },
         { exercise: 'Incline Dumbbell Press', sets: 3, reps: 12, duration: 15 },
         { exercise: 'Cable Flyes', sets: 3, reps: 12, duration: 12 },
-        { exercise: 'Tricep Dips', sets: 3, reps: 12, duration: 10 },
-        { exercise: 'Treadmill Incline Walk', sets: 1, reps: 1, duration: 30 }
+        { exercise: 'Dips', sets: 3, reps: 10, duration: 10 },
+        { exercise: 'Tricep Pushdown', sets: 3, reps: 12, duration: 10 },
+        { exercise: 'Skull Crushers', sets: 3, reps: 12, duration: 10 }
     ],
     'back-biceps': [
+        { exercise: 'Deadlifts', sets: 3, reps: 5, duration: 15 },
         { exercise: 'Lat Pulldown', sets: 3, reps: 10, duration: 15 },
-        { exercise: 'Cable Rows', sets: 3, reps: 12, duration: 15 },
-        { exercise: 'Deadlifts', sets: 3, reps: 8, duration: 15 },
+        { exercise: 'Barbell Rows', sets: 3, reps: 10, duration: 15 },
+        { exercise: 'Cable Rows', sets: 3, reps: 12, duration: 12 },
         { exercise: 'Barbell Curls', sets: 3, reps: 12, duration: 10 },
         { exercise: 'Hammer Curls', sets: 3, reps: 12, duration: 10 }
     ],
     'legs': [
-        { exercise: 'Squats', sets: 4, reps: 10, duration: 20 },
+        { exercise: 'Squats', sets: 4, reps: 8, duration: 20 },
         { exercise: 'Leg Press', sets: 3, reps: 12, duration: 15 },
+        { exercise: 'Romanian Deadlift', sets: 3, reps: 10, duration: 15 },
         { exercise: 'Leg Curls', sets: 3, reps: 12, duration: 12 },
-        { exercise: 'Calf Raises', sets: 4, reps: 15, duration: 10 },
-        { exercise: 'Treadmill Incline Walk', sets: 1, reps: 1, duration: 30 }
+        { exercise: 'Leg Extensions', sets: 3, reps: 12, duration: 12 },
+        { exercise: 'Calf Raises', sets: 4, reps: 15, duration: 10 }
     ],
     'shoulders-core': [
-        { exercise: 'Shoulder Press', sets: 3, reps: 10, duration: 15 },
-        { exercise: 'Lateral Raises', sets: 3, reps: 12, duration: 12 },
-        { exercise: 'Front Raises', sets: 3, reps: 12, duration: 10 },
-        { exercise: 'Plank', sets: 3, reps: 1, duration: 3 },
-        { exercise: 'Bicycle Crunches', sets: 3, reps: 20, duration: 5 },
-        { exercise: 'Mountain Climbers', sets: 3, reps: 40, duration: 5 }
+        { exercise: 'Shoulder Press', sets: 4, reps: 10, duration: 15 },
+        { exercise: 'Lateral Raises', sets: 3, reps: 15, duration: 12 },
+        { exercise: 'Face Pulls', sets: 3, reps: 15, duration: 10 },
+        { exercise: 'Shrugs', sets: 3, reps: 12, duration: 10 },
+        { exercise: 'Plank', sets: 1, reps: 1, duration: 3 },
+        { exercise: 'Hanging Leg Raise', sets: 3, reps: 12, duration: 8 },
+        { exercise: 'Russian Twists', sets: 3, reps: 20, duration: 5 }
+    ],
+    'push': [
+        { exercise: 'Bench Press', sets: 4, reps: 8, duration: 15 },
+        { exercise: 'Dumbbell Shoulder Press', sets: 3, reps: 10, duration: 12 },
+        { exercise: 'Incline Dumbbell Press', sets: 3, reps: 12, duration: 12 },
+        { exercise: 'Lateral Raises', sets: 3, reps: 15, duration: 10 },
+        { exercise: 'Tricep Pushdown', sets: 3, reps: 12, duration: 10 },
+        { exercise: 'Overhead Tricep Extension', sets: 3, reps: 12, duration: 10 }
+    ],
+    'pull': [
+        { exercise: 'Deadlifts', sets: 3, reps: 5, duration: 15 },
+        { exercise: 'Pull-ups', sets: 4, reps: 8, duration: 12 },
+        { exercise: 'Barbell Rows', sets: 3, reps: 10, duration: 12 },
+        { exercise: 'Face Pulls', sets: 3, reps: 15, duration: 10 },
+        { exercise: 'Barbell Curls', sets: 3, reps: 12, duration: 10 },
+        { exercise: 'Hammer Curls', sets: 3, reps: 12, duration: 10 }
+    ],
+    'upper-body': [
+        { exercise: 'Bench Press', sets: 4, reps: 8, duration: 15 },
+        { exercise: 'Lat Pulldown', sets: 3, reps: 10, duration: 12 },
+        { exercise: 'Dumbbell Shoulder Press', sets: 3, reps: 10, duration: 12 },
+        { exercise: 'Dumbbell Rows', sets: 3, reps: 10, duration: 10 },
+        { exercise: 'Barbell Curls', sets: 3, reps: 12, duration: 10 },
+        { exercise: 'Tricep Dips', sets: 3, reps: 12, duration: 10 }
+    ],
+    'lower-body': [
+        { exercise: 'Squats', sets: 4, reps: 8, duration: 20 },
+        { exercise: 'Hip Thrust', sets: 3, reps: 12, duration: 15 },
+        { exercise: 'Bulgarian Split Squat', sets: 3, reps: 10, duration: 15 },
+        { exercise: 'Leg Curls', sets: 3, reps: 12, duration: 12 },
+        { exercise: 'Calf Raises', sets: 4, reps: 15, duration: 10 },
+        { exercise: 'Lunges', sets: 3, reps: 12, duration: 12 }
     ],
     'cardio': [
-        { exercise: 'Treadmill Incline Walk', sets: 1, reps: 1, duration: 30 },
-        { exercise: 'Stationary Bike', sets: 1, reps: 1, duration: 20 },
-        { exercise: 'Jump Rope', sets: 3, reps: 100, duration: 5 }
+        { exercise: 'Treadmill Incline Walk', sets: 1, reps: 1, duration: 15 },
+        { exercise: 'Stationary Bike', sets: 1, reps: 1, duration: 15 },
+        { exercise: 'Rowing Machine', sets: 1, reps: 1, duration: 10 },
+        { exercise: 'Jump Rope', sets: 1, reps: 1, duration: 10 },
+        { exercise: 'Elliptical', sets: 1, reps: 1, duration: 10 }
+    ],
+    'hiit': [
+        { exercise: 'Burpees', sets: 1, reps: 1, duration: 5 },
+        { exercise: 'Battle Ropes', sets: 1, reps: 1, duration: 5 },
+        { exercise: 'Mountain Climbers', sets: 1, reps: 1, duration: 5 },
+        { exercise: 'Box Jumps', sets: 4, reps: 10, duration: 5 },
+        { exercise: 'Kettlebell Swing', sets: 4, reps: 15, duration: 5 },
+        { exercise: 'Assault Bike', sets: 1, reps: 1, duration: 5 }
     ],
     'full-body': [
-        { exercise: 'Deadlifts', sets: 3, reps: 8, duration: 15 },
-        { exercise: 'Bench Press', sets: 3, reps: 10, duration: 15 },
+        { exercise: 'Deadlifts', sets: 3, reps: 5, duration: 15 },
+        { exercise: 'Bench Press', sets: 3, reps: 8, duration: 15 },
         { exercise: 'Pull-ups', sets: 3, reps: 8, duration: 10 },
-        { exercise: 'Squats', sets: 3, reps: 10, duration: 15 },
+        { exercise: 'Squats', sets: 3, reps: 8, duration: 15 },
         { exercise: 'Shoulder Press', sets: 3, reps: 10, duration: 12 },
-        { exercise: 'Plank', sets: 3, reps: 1, duration: 3 }
+        { exercise: 'Plank', sets: 1, reps: 1, duration: 2 }
+    ],
+    'yoga-flow': [
+        { exercise: 'Dynamic Stretching', sets: 1, reps: 1, duration: 10 },
+        { exercise: 'Yoga', sets: 1, reps: 1, duration: 30 },
+        { exercise: 'Stretching', sets: 1, reps: 1, duration: 10 },
+        { exercise: 'Foam Rolling', sets: 1, reps: 1, duration: 10 }
+    ],
+    'olympic-lifting': [
+        { exercise: 'Power Clean', sets: 5, reps: 3, duration: 20 },
+        { exercise: 'Clean and Jerk', sets: 4, reps: 2, duration: 20 },
+        { exercise: 'Snatch', sets: 4, reps: 2, duration: 20 },
+        { exercise: 'Front Squats', sets: 3, reps: 5, duration: 15 },
+        { exercise: 'Push Press', sets: 3, reps: 5, duration: 12 }
+    ],
+    'boxing-circuit': [
+        { exercise: 'Shadow Boxing', sets: 1, reps: 1, duration: 10 },
+        { exercise: 'Heavy Bag', sets: 1, reps: 1, duration: 15 },
+        { exercise: 'Jump Rope', sets: 1, reps: 1, duration: 10 },
+        { exercise: 'Burpees', sets: 1, reps: 1, duration: 5 },
+        { exercise: 'Plank', sets: 1, reps: 1, duration: 3 }
     ]
 };
 
@@ -325,37 +391,62 @@ function endSession() {
     let totalSets = 0;
     let totalExercises = activeSession.exercises.filter(ex => ex.sets.some(s => s.done)).length || 1;
 
-    // Distribute time by completed sets proportionally (more sets = more time)
+    // Distribute time proportionally across STRENGTH exercises (timed exercises use their own duration)
     let totalCompletedSets = 0;
-    activeSession.exercises.forEach(ex => { totalCompletedSets += ex.sets.filter(s => s.done).length; });
+    activeSession.exercises.forEach(ex => { if (!ex.timed) totalCompletedSets += ex.sets.filter(s => s.done).length; });
     if (totalCompletedSets === 0) totalCompletedSets = totalExercises; // fallback
 
     activeSession.exercises.forEach(ex => {
         const completedSets = ex.sets.filter(s => s.done);
         totalSets += completedSets.length;
 
-        // Duration: proportional to sets completed (not equal split)
-        const setFraction = completedSets.length > 0 ? completedSets.length / totalCompletedSets : 1 / totalExercises;
-        const durPerExercise = Math.max(1, Math.round(totalMin * setFraction));
-        const cals = calculateCaloriesBurned(ex.name, durPerExercise, currentUser.weight, currentUser.height, currentUser.age, currentUser.gender, 'moderate');
-        totalCals += cals;
+        if (ex.timed) {
+            // TIMED: use the actual entered duration and intensity
+            const s = completedSets[0] || ex.sets[0];
+            const durMin = s.duration || 1;
+            const intensity = s.intensity || 'moderate';
+            const cals = calculateCaloriesBurned(ex.name, durMin, currentUser.weight, currentUser.height, currentUser.age, currentUser.gender, intensity);
+            totalCals += cals;
 
-        const workout = {
-            id: Date.now() + Math.random(),
-            date: date,
-            exercise: ex.name,
-            category: ex.category,
-            duration: durPerExercise,
-            intensity: 'moderate',
-            caloriesBurned: cals,
-            sets: completedSets.length,
-            reps: completedSets.length > 0 ? completedSets[0].reps : 0,
-            weight: completedSets.length > 0 ? completedSets[0].weight : 0,
-            setsDetail: completedSets.map(s => ({ weight: s.weight, reps: s.reps })),
-            sessionId: activeSession.startTime,
-            timestamp: new Date().toISOString()
-        };
-        workouts.push(workout);
+            const workout = {
+                id: Date.now() + Math.random(),
+                date: date,
+                exercise: ex.name,
+                category: ex.category,
+                duration: durMin,
+                intensity: intensity,
+                caloriesBurned: cals,
+                sets: 0,
+                reps: 0,
+                weight: 0,
+                sessionId: activeSession.startTime,
+                timestamp: new Date().toISOString()
+            };
+            workouts.push(workout);
+        } else {
+            // STRENGTH: proportional time split
+            const setFraction = completedSets.length > 0 ? completedSets.length / totalCompletedSets : 1 / totalExercises;
+            const durPerExercise = Math.max(1, Math.round(totalMin * setFraction));
+            const cals = calculateCaloriesBurned(ex.name, durPerExercise, currentUser.weight, currentUser.height, currentUser.age, currentUser.gender, 'moderate');
+            totalCals += cals;
+
+            const workout = {
+                id: Date.now() + Math.random(),
+                date: date,
+                exercise: ex.name,
+                category: ex.category,
+                duration: durPerExercise,
+                intensity: 'moderate',
+                caloriesBurned: cals,
+                sets: completedSets.length,
+                reps: completedSets.length > 0 ? completedSets[0].reps : 0,
+                weight: completedSets.length > 0 ? completedSets[0].weight : 0,
+                setsDetail: completedSets.map(s => ({ weight: s.weight, reps: s.reps })),
+                sessionId: activeSession.startTime,
+                timestamp: new Date().toISOString()
+            };
+            workouts.push(workout);
+        }
     });
 
     saveUserData('workouts', workouts);
@@ -418,6 +509,12 @@ function restoreSession() {
 // ═══════════════════════════════════════════════
 // LIVE SESSION — add exercise / sets
 // ═══════════════════════════════════════════════
+// Helper: is exercise timed-based?
+function isTimedExercise(name) {
+    var db = exerciseDatabase.find(function(e) { return e.name.toLowerCase() === name.toLowerCase(); });
+    return db ? db.type === 'timed' : false;
+}
+
 function addExerciseToSession() {
     if (!activeSession) { startSession(); }
 
@@ -428,12 +525,16 @@ function addExerciseToSession() {
     const dbEntry = exerciseDatabase.find(e => e.name.toLowerCase() === exName.toLowerCase());
     const category = dbEntry ? dbEntry.category : (document.getElementById('exerciseCategory').value || 'strength');
     const met = dbEntry ? dbEntry.met : 5.0;
+    const timed = dbEntry ? dbEntry.type === 'timed' : false;
 
     const exercise = {
         name: dbEntry ? dbEntry.name : exName,
         category: category,
         met: met,
-        sets: [{ weight: 0, reps: 0, done: false }]  // start with 1 blank set
+        timed: timed,
+        sets: timed
+            ? [{ duration: 0, intensity: 'moderate', done: false }]   // timed: duration in minutes
+            : [{ weight: 0, reps: 0, done: false }]                  // strength: weight & reps
     };
 
     activeSession.exercises.push(exercise);
@@ -452,41 +553,85 @@ function renderAllLiveCards() {
 
     container.innerHTML = activeSession.exercises.map((ex, ei) => {
         const allDone = ex.sets.length > 0 && ex.sets.every(s => s.done);
-        return `
-        <div class="live-exercise-card${allDone ? ' completed' : ''}">
-            <div class="live-exercise-header">
-                <div>
-                    <h3>${ex.name}</h3>
-                    <span style="font-size:.8rem;color:var(--text-secondary)">${ex.category}</span>
+        const timed = ex.timed;
+
+        if (timed) {
+            // ── TIMED EXERCISE: Duration + Intensity ──
+            const s = ex.sets[0]; // timed exercises have a single entry
+            return `
+            <div class="live-exercise-card${allDone ? ' completed' : ''}">
+                <div class="live-exercise-header">
+                    <div>
+                        <h3>${ex.name}</h3>
+                        <span style="font-size:.8rem;color:var(--text-secondary)">${ex.category} • timed</span>
+                    </div>
+                    <button class="btn-delete" onclick="removeSessionExercise(${ei})" title="Remove">✕</button>
                 </div>
-                <button class="btn-delete" onclick="removeSessionExercise(${ei})" title="Remove">✕</button>
-            </div>
-            <table class="sets-table">
-                <thead><tr><th>Set</th><th>Weight (kg)</th><th>Reps</th><th></th></tr></thead>
-                <tbody>
-                    ${ex.sets.map((s, si) => `
-                    <tr class="${s.done ? 'set-done' : ''}">
-                        <td>${si + 1}</td>
-                        <td><input type="number" min="0" value="${s.weight || ''}" placeholder="0"
-                            onchange="updateSet(${ei},${si},'weight',this.value)" ${s.done ? 'disabled' : ''}></td>
-                        <td><input type="number" min="0" value="${s.reps || ''}" placeholder="0"
-                            onchange="updateSet(${ei},${si},'reps',this.value)" ${s.done ? 'disabled' : ''}></td>
-                        <td>
-                            <button class="btn-complete-set${s.done ? ' done' : ''}" onclick="toggleSet(${ei},${si})">
-                                ${s.done ? '✓' : '○'}
-                            </button>
-                        </td>
-                    </tr>`).join('')}
-                </tbody>
-            </table>
-            <button class="btn-add-set" onclick="addSet(${ei})">+ Add Set</button>
-        </div>`;
+                <div class="timed-exercise-inputs" style="display:flex;gap:12px;align-items:end;padding:12px 0;">
+                    <div style="flex:1">
+                        <label style="font-size:.8rem;color:var(--text-secondary);display:block;margin-bottom:4px">Duration (min)</label>
+                        <input type="number" min="0" value="${s.duration || ''}" placeholder="0"
+                            onchange="updateSet(${ei},0,'duration',this.value)" ${s.done ? 'disabled' : ''}
+                            style="width:100%;padding:8px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:8px;color:var(--text-primary);font-size:1rem">
+                    </div>
+                    <div style="flex:1">
+                        <label style="font-size:.8rem;color:var(--text-secondary);display:block;margin-bottom:4px">Intensity</label>
+                        <select onchange="updateSet(${ei},0,'intensity',this.value)" ${s.done ? 'disabled' : ''}
+                            style="width:100%;padding:8px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:8px;color:var(--text-primary);font-size:1rem">
+                            <option value="low"${s.intensity==='low'?' selected':''}>Low</option>
+                            <option value="moderate"${s.intensity==='moderate'?' selected':''}>Moderate</option>
+                            <option value="high"${s.intensity==='high'?' selected':''}>High</option>
+                        </select>
+                    </div>
+                    <button class="btn-complete-set${s.done ? ' done' : ''}" onclick="toggleSet(${ei},0)"
+                        style="min-width:40px;height:40px;margin-bottom:0">
+                        ${s.done ? '✓' : '○'}
+                    </button>
+                </div>
+            </div>`;
+        } else {
+            // ── STRENGTH EXERCISE: Weight / Reps table ──
+            return `
+            <div class="live-exercise-card${allDone ? ' completed' : ''}">
+                <div class="live-exercise-header">
+                    <div>
+                        <h3>${ex.name}</h3>
+                        <span style="font-size:.8rem;color:var(--text-secondary)">${ex.category}</span>
+                    </div>
+                    <button class="btn-delete" onclick="removeSessionExercise(${ei})" title="Remove">✕</button>
+                </div>
+                <table class="sets-table">
+                    <thead><tr><th>Set</th><th>Weight (kg)</th><th>Reps</th><th></th></tr></thead>
+                    <tbody>
+                        ${ex.sets.map((s, si) => `
+                        <tr class="${s.done ? 'set-done' : ''}">
+                            <td>${si + 1}</td>
+                            <td><input type="number" min="0" value="${s.weight || ''}" placeholder="0"
+                                onchange="updateSet(${ei},${si},'weight',this.value)" ${s.done ? 'disabled' : ''}></td>
+                            <td><input type="number" min="0" value="${s.reps || ''}" placeholder="0"
+                                onchange="updateSet(${ei},${si},'reps',this.value)" ${s.done ? 'disabled' : ''}></td>
+                            <td>
+                                <button class="btn-complete-set${s.done ? ' done' : ''}" onclick="toggleSet(${ei},${si})">
+                                    ${s.done ? '✓' : '○'}
+                                </button>
+                            </td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+                <button class="btn-add-set" onclick="addSet(${ei})">+ Add Set</button>
+            </div>`;
+        }
     }).join('');
 }
 
 function updateSet(exIdx, setIdx, field, val) {
     if (!activeSession) return;
-    activeSession.exercises[exIdx].sets[setIdx][field] = parseFloat(val) || 0;
+    // For intensity it's a string; for numbers parse as float
+    if (field === 'intensity') {
+        activeSession.exercises[exIdx].sets[setIdx][field] = val;
+    } else {
+        activeSession.exercises[exIdx].sets[setIdx][field] = parseFloat(val) || 0;
+    }
     persistSession();
 }
 
@@ -500,8 +645,11 @@ function toggleSet(exIdx, setIdx) {
 
 function addSet(exIdx) {
     if (!activeSession) return;
-    const lastSet = activeSession.exercises[exIdx].sets.slice(-1)[0];
-    activeSession.exercises[exIdx].sets.push({
+    const ex = activeSession.exercises[exIdx];
+    // Don't add sets for timed exercises (they use a single duration entry)
+    if (ex.timed) return;
+    const lastSet = ex.sets.slice(-1)[0];
+    ex.sets.push({
         weight: lastSet ? lastSet.weight : 0,
         reps: lastSet ? lastSet.reps : 0,
         done: false
@@ -715,14 +863,20 @@ function loadTemplate(templateId) {
     template.forEach(item => {
         const dbEntry = exerciseDatabase.find(e => e.name === item.exercise);
         if (!dbEntry) return;
+        const timed = dbEntry.type === 'timed';
         const sets = [];
-        for (let i = 0; i < (item.sets || 3); i++) {
-            sets.push({ weight: 0, reps: item.reps || 0, done: false });
+        if (timed) {
+            sets.push({ duration: item.duration || 0, intensity: 'moderate', done: false });
+        } else {
+            for (let i = 0; i < (item.sets || 3); i++) {
+                sets.push({ weight: 0, reps: item.reps || 0, done: false });
+            }
         }
         activeSession.exercises.push({
             name: item.exercise,
             category: dbEntry.category,
             met: dbEntry.met,
+            timed: timed,
             sets: sets
         });
     });

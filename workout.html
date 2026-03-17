@@ -98,8 +98,10 @@
                                 <option value="">All</option>
                                 <option value="cardio">Cardio</option>
                                 <option value="strength">Strength</option>
-                                <option value="flexibility">Flexibility</option>
+                                <option value="hiit">HIIT / Functional</option>
                                 <option value="sports">Sports</option>
+                                <option value="martial_arts">Martial Arts</option>
+                                <option value="flexibility">Flexibility</option>
                             </select>
                         </div>
                     </div>
@@ -127,8 +129,10 @@
                             <option value="">All</option>
                             <option value="cardio">Cardio</option>
                             <option value="strength">Strength</option>
-                            <option value="flexibility">Flexibility</option>
+                            <option value="hiit">HIIT / Functional</option>
                             <option value="sports">Sports</option>
+                            <option value="martial_arts">Martial Arts</option>
+                            <option value="flexibility">Flexibility</option>
                         </select>
                     </div>
                 </div>
@@ -203,66 +207,142 @@
             <div class="template-grid">
                 <div class="template-card" onclick="loadTemplate('chest-triceps')">
                     <h4>💪 Chest + Triceps</h4>
-                    <p>4 exercises • ~60 min</p>
+                    <p>6 exercises • ~70 min</p>
                     <ul>
                         <li>Bench Press</li>
-                        <li>Incline Dumbbell Press</li>
-                        <li>Tricep Dips</li>
+                        <li>Incline DB Press</li>
                         <li>Cable Flyes</li>
+                        <li>Dips, Pushdown, Skull Crushers</li>
                     </ul>
                 </div>
-
                 <div class="template-card" onclick="loadTemplate('back-biceps')">
                     <h4>💪 Back + Biceps</h4>
-                    <p>4 exercises • ~60 min</p>
+                    <p>6 exercises • ~75 min</p>
                     <ul>
-                        <li>Lat Pulldown</li>
-                        <li>Cable Rows</li>
+                        <li>Deadlifts</li>
+                        <li>Lat Pulldown, Rows</li>
                         <li>Barbell Curls</li>
                         <li>Hammer Curls</li>
                     </ul>
                 </div>
-
+                <div class="template-card" onclick="loadTemplate('push')">
+                    <h4>🔄 Push Day</h4>
+                    <p>6 exercises • ~70 min</p>
+                    <ul>
+                        <li>Bench Press</li>
+                        <li>DB Shoulder Press</li>
+                        <li>Lateral Raises</li>
+                        <li>Tricep Pushdown</li>
+                    </ul>
+                </div>
+                <div class="template-card" onclick="loadTemplate('pull')">
+                    <h4>🔄 Pull Day</h4>
+                    <p>6 exercises • ~70 min</p>
+                    <ul>
+                        <li>Deadlifts</li>
+                        <li>Pull-ups, Rows</li>
+                        <li>Face Pulls</li>
+                        <li>Curls</li>
+                    </ul>
+                </div>
                 <div class="template-card" onclick="loadTemplate('legs')">
                     <h4>🦵 Leg Day</h4>
-                    <p>5 exercises • ~65 min</p>
+                    <p>6 exercises • ~80 min</p>
                     <ul>
                         <li>Squats</li>
-                        <li>Leg Press</li>
-                        <li>Leg Curls</li>
+                        <li>RDL, Leg Press</li>
+                        <li>Extensions, Curls</li>
                         <li>Calf Raises</li>
                     </ul>
                 </div>
-
-                <div class="template-card" onclick="loadTemplate('shoulders-core')">
-                    <h4>💪 Shoulders + Core</h4>
-                    <p>5 exercises • ~55 min</p>
+                <div class="template-card" onclick="loadTemplate('upper-body')">
+                    <h4>⬆️ Upper Body</h4>
+                    <p>6 exercises • ~70 min</p>
                     <ul>
+                        <li>Bench Press</li>
+                        <li>Lat Pulldown</li>
                         <li>Shoulder Press</li>
-                        <li>Lateral Raises</li>
-                        <li>Planks</li>
-                        <li>Bicycle Crunches</li>
+                        <li>Curls & Dips</li>
                     </ul>
                 </div>
-
-                <div class="template-card" onclick="loadTemplate('cardio')">
-                    <h4>🏃 Cardio Blast</h4>
-                    <p>3 exercises • ~45 min</p>
+                <div class="template-card" onclick="loadTemplate('lower-body')">
+                    <h4>⬇️ Lower Body</h4>
+                    <p>6 exercises • ~80 min</p>
                     <ul>
-                        <li>Treadmill Incline Walk</li>
-                        <li>Stationary Bike</li>
-                        <li>Jump Rope</li>
+                        <li>Squats</li>
+                        <li>Hip Thrust</li>
+                        <li>Bulgarian Split Squat</li>
+                        <li>Lunges, Calves</li>
                     </ul>
                 </div>
-
+                <div class="template-card" onclick="loadTemplate('shoulders-core')">
+                    <h4>🎯 Shoulders + Core</h4>
+                    <p>7 exercises • ~60 min</p>
+                    <ul>
+                        <li>OHP, Lateral Raises</li>
+                        <li>Face Pulls, Shrugs</li>
+                        <li>Plank, Leg Raises</li>
+                        <li>Russian Twists</li>
+                    </ul>
+                </div>
+                <div class="template-card" onclick="loadTemplate('cardio')">
+                    <h4>🏃 Cardio Session</h4>
+                    <p>5 exercises • ~60 min</p>
+                    <ul>
+                        <li>Treadmill Walk</li>
+                        <li>Stationary Bike</li>
+                        <li>Rowing Machine</li>
+                        <li>Jump Rope, Elliptical</li>
+                    </ul>
+                </div>
+                <div class="template-card" onclick="loadTemplate('hiit')">
+                    <h4>⚡ HIIT Circuit</h4>
+                    <p>6 exercises • ~30 min</p>
+                    <ul>
+                        <li>Burpees</li>
+                        <li>Battle Ropes</li>
+                        <li>Mountain Climbers</li>
+                        <li>Box Jumps, KB Swings</li>
+                    </ul>
+                </div>
                 <div class="template-card" onclick="loadTemplate('full-body')">
                     <h4>🔥 Full Body</h4>
                     <p>6 exercises • ~70 min</p>
                     <ul>
-                        <li>Deadlifts</li>
-                        <li>Bench Press</li>
-                        <li>Pull-ups</li>
-                        <li>Squats</li>
+                        <li>Deadlifts, Bench</li>
+                        <li>Pull-ups, Squats</li>
+                        <li>Shoulder Press</li>
+                        <li>Plank</li>
+                    </ul>
+                </div>
+                <div class="template-card" onclick="loadTemplate('olympic-lifting')">
+                    <h4>🏅 Olympic Lifting</h4>
+                    <p>5 exercises • ~75 min</p>
+                    <ul>
+                        <li>Power Clean</li>
+                        <li>Clean & Jerk</li>
+                        <li>Snatch</li>
+                        <li>Front Squats</li>
+                    </ul>
+                </div>
+                <div class="template-card" onclick="loadTemplate('boxing-circuit')">
+                    <h4>🥊 Boxing Circuit</h4>
+                    <p>5 exercises • ~45 min</p>
+                    <ul>
+                        <li>Shadow Boxing</li>
+                        <li>Heavy Bag</li>
+                        <li>Jump Rope</li>
+                        <li>Burpees, Plank</li>
+                    </ul>
+                </div>
+                <div class="template-card" onclick="loadTemplate('yoga-flow')">
+                    <h4>🧘 Yoga & Recovery</h4>
+                    <p>4 exercises • ~60 min</p>
+                    <ul>
+                        <li>Dynamic Stretching</li>
+                        <li>Yoga Flow</li>
+                        <li>Stretching</li>
+                        <li>Foam Rolling</li>
                     </ul>
                 </div>
             </div>

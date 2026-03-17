@@ -389,11 +389,10 @@ function displayBodyStats() {
     document.getElementById('displayBodyType').textContent = cat.text;
     document.getElementById('displayBodyType').style.color = cat.color;
 
-    // Body fat estimate (CUN-BAE formula â€” more accurate than Navy method for estimate-only)
+    // Body fat estimate (Deurenberg formula)
     let bf;
     if (gender === 'male') {
-        bf = -44.988 + (0.503 * age) + (10.689 * bmi / 10) + (3.172 * 1);
-        bf = (1.20 * bmi) + (0.23 * age) - 16.2; // Deurenberg simplified
+        bf = (1.20 * bmi) + (0.23 * age) - 16.2;
     } else {
         bf = (1.20 * bmi) + (0.23 * age) - 5.4;
     }
@@ -508,9 +507,11 @@ function loadDashboardData() {
     document.getElementById('streakDays').textContent       = streak;
     document.getElementById('workoutTime').textContent      = wMin;
 
-    updateProgressBars(totalCal, totalPro, water, burned, wMin);
+    updateProgressBars(totalCal, totalPro, water, burned, wMin, totalCarbs, totalFat);
     updateFitnessScore(totalCal, totalPro, burned, water, streak, wMin);
     loadRecentActivity();
+    renderWeeklyChart();
+    renderDailyGoals(totalCal, totalPro, water, burned, wMin);
 
     // Pre-fill BMI inputs
     const hIn = (currentUser.height || 170) / 2.54;
@@ -534,22 +535,41 @@ function calculateStreak() {
     return streak;
 }
 
-function updateProgressBars(cal, pro, water, burned, wMin) {
+function updateProgressBars(cal, pro, water, burned, wMin, carbs, fat) {
     const cGoal = currentUser.calorieGoal || 2000;
     const pGoal = currentUser.proteinGoal || 150;
+    const carbGoal = currentUser.carbsGoal || 250;
+    const fatGoal = currentUser.fatsGoal || 65;
+    const waterGoal = 3000;
+    const burnGoal = Math.round((cGoal || 2000) * 0.25); // ~25% of calorie goal
 
-    document.getElementById('caloriesEaten').textContent = cal;
+    document.getElementById('caloriesEaten').textContent = Math.round(cal);
     document.getElementById('calorieTarget').textContent = cGoal;
     document.getElementById('waterConsumed').textContent = water;
     document.getElementById('proteinEaten').textContent  = Math.round(pro);
     document.getElementById('proteinTarget').textContent = pGoal;
     document.getElementById('burnedDisplay').textContent = burned;
 
+    // Carbs & Fat displays
+    var carbsEl = document.getElementById('carbsEaten');
+    var fatEl = document.getElementById('fatEaten');
+    if (carbsEl) carbsEl.textContent = Math.round(carbs || 0);
+    if (fatEl) fatEl.textContent = Math.round(fat || 0);
+    var carbTargetEl = document.getElementById('carbsTargetDisplay');
+    var fatTargetEl = document.getElementById('fatTargetDisplay');
+    if (carbTargetEl) carbTargetEl.textContent = carbGoal;
+    if (fatTargetEl) fatTargetEl.textContent = fatGoal;
+
     document.getElementById('calorieProgress').style.width = Math.min((cal / cGoal) * 100, 100) + '%';
-    document.getElementById('waterProgress').style.width   = Math.min((water / 4000) * 100, 100) + '%';
+    document.getElementById('waterProgress').style.width   = Math.min((water / waterGoal) * 100, 100) + '%';
     document.getElementById('proteinProgress').style.width = Math.min((pro / pGoal) * 100, 100) + '%';
-    document.getElementById('burnedProgress').style.width  = Math.min((burned / 500) * 100, 100) + '%';
+    document.getElementById('burnedProgress').style.width  = Math.min((burned / burnGoal) * 100, 100) + '%';
     document.getElementById('workoutProgress').style.width = Math.min((wMin / 60) * 100, 100) + '%';
+
+    var carbsBar = document.getElementById('carbsProgress');
+    var fatBar = document.getElementById('fatProgress');
+    if (carbsBar) carbsBar.style.width = Math.min(((carbs || 0) / carbGoal) * 100, 100) + '%';
+    if (fatBar) fatBar.style.width = Math.min(((fat || 0) / fatGoal) * 100, 100) + '%';
 }
 
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -597,9 +617,13 @@ function updateFitnessScore(cal, pro, burned, water, streak, wMin) {
    Recent Activity
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 function loadRecentActivity() {
-    const meals = loadUserData('meals').slice(-5).reverse();
-    const workouts = loadUserData('workouts').slice(-5).reverse();
-    const waterLog = loadUserData('water').slice(-3).reverse();
+    const allMeals = loadUserData('meals');
+    const allWorkouts = loadUserData('workouts');
+    const allWater = loadUserData('water');
+    // Sort by timestamp first, THEN slice — avoids missing recent entries
+    const meals = allMeals.sort((a,b) => new Date(b.timestamp||0) - new Date(a.timestamp||0)).slice(0, 5);
+    const workouts = allWorkouts.sort((a,b) => new Date(b.timestamp||0) - new Date(a.timestamp||0)).slice(0, 5);
+    const waterLog = allWater.sort((a,b) => new Date(b.timestamp||0) - new Date(a.timestamp||0)).slice(0, 3);
     const combined = [
         ...meals.map(m => ({ type: 'meal', text: 'ðŸ½ï¸ ' + m.foodName + ' (' + Math.round(m.calories * m.quantity) + ' cal)', time: m.timestamp })),
         ...workouts.map(w => ({ type: 'workout', text: 'ðŸ‹ï¸ ' + w.exercise + ' â€” ' + (w.duration || 0) + 'min (' + (w.caloriesBurned || 0) + ' cal burned)', time: w.timestamp })),
@@ -681,11 +705,131 @@ function estimateCalorieBurn() {
     const dur = parseInt(document.getElementById('burnDuration').value);
     if (!dur || dur <= 0) { showNotification('Enter a valid duration', 'error'); return; }
 
-    const met = parseFloat(activity.split('-')[1]);
-    const wKg = (currentUser.weight || 160) * 0.453592;
-    const burned = Math.round(met * wKg * (dur / 60));
+    // Use the same formula as the actual workout tracker for consistency
+    const actLabel = activity.split('-')[0].trim();
+    const burned = calculateCaloriesBurned(
+        actLabel, dur,
+        currentUser.weight || 160,
+        currentUser.height || 170,
+        currentUser.age || 25,
+        currentUser.gender || 'male',
+        'moderate'
+    );
 
     document.getElementById('burnCalories').textContent = burned;
     document.getElementById('burnResult').classList.remove('hidden');
     showNotification(`Estimated burn: ${burned} kcal`);
+}
+
+/* ═══════════════════════════════════════════════
+   Weekly Overview Chart (last 7 days)
+   ═══════════════════════════════════════════════ */
+let weeklyChartInstance = null;
+function renderWeeklyChart() {
+    const canvas = document.getElementById('weeklyChart');
+    if (!canvas) return;
+
+    const labels = [];
+    const calIn = [];
+    const calOut = [];
+    const waterArr = [];
+
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const ds = d.toISOString().split('T')[0];
+        const dayName = d.toLocaleDateString('en', { weekday: 'short' });
+        labels.push(dayName);
+
+        const meals = getDataForDate('meals', ds);
+        let mCal = 0;
+        meals.forEach(m => { mCal += (m.calories || 0) * (m.quantity || 1); });
+        calIn.push(mCal);
+
+        const workouts = getDataForDate('workouts', ds);
+        let wCal = 0;
+        workouts.forEach(w => { wCal += w.caloriesBurned || 0; });
+        calOut.push(wCal);
+
+        const wLogs = getDataForDate('water', ds);
+        let wAmt = 0;
+        wLogs.forEach(w => { wAmt += w.amount || 0; });
+        waterArr.push(Math.round(wAmt / 100)); // in 100ml units for scaling
+    }
+
+    if (weeklyChartInstance) weeklyChartInstance.destroy();
+
+    weeklyChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Calories In',
+                    data: calIn,
+                    backgroundColor: 'rgba(129,140,248,0.7)',
+                    borderRadius: 6,
+                    barPercentage: 0.6
+                },
+                {
+                    label: 'Calories Burned',
+                    data: calOut,
+                    backgroundColor: 'rgba(244,63,94,0.7)',
+                    borderRadius: 6,
+                    barPercentage: 0.6
+                },
+                {
+                    label: 'Water (×100ml)',
+                    data: waterArr,
+                    type: 'line',
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56,189,248,0.15)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#38bdf8',
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { labels: { color: '#94a3b8', font: { size: 11 } } }
+            },
+            scales: {
+                x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,.04)' } },
+                y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,.04)' } },
+                y1: { position: 'right', beginAtZero: true, ticks: { color: '#38bdf8' }, grid: { display: false } }
+            }
+        }
+    });
+}
+
+/* ═══════════════════════════════════════════════
+   Daily Goals Checklist
+   ═══════════════════════════════════════════════ */
+function renderDailyGoals(cal, pro, water, burned, wMin) {
+    const cGoal = currentUser.calorieGoal || 2000;
+    const pGoal = currentUser.proteinGoal || 150;
+    const goals = [
+        { label: 'Eat close to calorie target', done: cal > 0 && (cal / cGoal) >= 0.8 && (cal / cGoal) <= 1.2, detail: Math.round(cal) + ' / ' + cGoal + ' kcal' },
+        { label: 'Hit protein goal', done: pro >= pGoal * 0.8, detail: Math.round(pro) + ' / ' + pGoal + 'g' },
+        { label: 'Drink 3L water', done: water >= 3000, detail: water + ' / 3000 ml' },
+        { label: 'Exercise 30+ min', done: wMin >= 30, detail: wMin + ' min' },
+        { label: 'Burn 300+ calories', done: burned >= 300, detail: burned + ' kcal' }
+    ];
+
+    const el = document.getElementById('dailyGoalsChecklist');
+    if (!el) return;
+    const completed = goals.filter(g => g.done).length;
+    el.innerHTML = `<div style="margin-bottom:12px;color:var(--text-secondary);font-size:.9rem">${completed}/${goals.length} completed</div>` +
+        goals.map(g => `
+        <div class="goal-item${g.done ? ' goal-done' : ''}">
+            <span class="goal-check">${g.done ? '✅' : '⬜'}</span>
+            <span class="goal-label">${g.label}</span>
+            <span class="goal-detail">${g.detail}</span>
+        </div>`).join('');
 }
