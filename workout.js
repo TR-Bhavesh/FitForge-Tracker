@@ -201,15 +201,21 @@ function endSession() {
 
     let totalCals = 0;
     let totalSets = 0;
-    let totalExercises = activeSession.exercises.length;
+    let totalExercises = activeSession.exercises.filter(ex => ex.sets.some(s => s.done)).length || 1;
+
+    // Distribute time by completed sets proportionally (more sets = more time)
+    let totalCompletedSets = 0;
+    activeSession.exercises.forEach(ex => { totalCompletedSets += ex.sets.filter(s => s.done).length; });
+    if (totalCompletedSets === 0) totalCompletedSets = totalExercises; // fallback
 
     activeSession.exercises.forEach(ex => {
         const completedSets = ex.sets.filter(s => s.done);
         totalSets += completedSets.length;
 
-        // Duration estimate: divide session time proportionally
-        const durPerExercise = Math.max(1, Math.round(totalMin / Math.max(1, totalExercises)));
-        const cals = calculateCaloriesBurned(ex.name, durPerExercise, currentUser.weight, currentUser.height, currentUser.age, currentUser.gender);
+        // Duration: proportional to sets completed (not equal split)
+        const setFraction = completedSets.length > 0 ? completedSets.length / totalCompletedSets : 1 / totalExercises;
+        const durPerExercise = Math.max(1, Math.round(totalMin * setFraction));
+        const cals = calculateCaloriesBurned(ex.name, durPerExercise, currentUser.weight, currentUser.height, currentUser.age, currentUser.gender, 'moderate');
         totalCals += cals;
 
         const workout = {
@@ -479,7 +485,7 @@ function addExercise() {
     const exercise = exerciseDatabase.find(e => e.name.toLowerCase() === exerciseName.toLowerCase());
     let category = exercise ? exercise.category : 'cardio';
     
-    const caloriesBurned = calculateCaloriesBurned(exerciseName, duration, currentUser.weight, currentUser.height, currentUser.age, currentUser.gender);
+    const caloriesBurned = calculateCaloriesBurned(exerciseName, duration, currentUser.weight, currentUser.height, currentUser.age, currentUser.gender, intensity);
     
     const workout = {
         id: Date.now(),

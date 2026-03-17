@@ -101,38 +101,70 @@ function getBMICategory(bmi) {
 }
 
 // Calculate calories burned for exercise (BMI-aware)
-function calculateCaloriesBurned(exercise, duration, weight, heightCm, age, gender) {
+function calculateCaloriesBurned(exercise, duration, weight, heightCm, age, gender, intensity) {
     // MET values for different exercises
     const metValues = {
         // Cardio
-        'walking': 3.5, 'jogging': 7.0, 'running': 9.8, 'sprinting': 14.5,
-        'cycling': 7.5, 'swimming': 8.0, 'treadmill': 7.0, 'elliptical': 6.5,
-        'stair_climber': 8.5, 'rowing': 8.5, 'jump_rope': 12.3, 'dancing': 6.0,
-        'hiking': 6.0, 'basketball': 8.0, 'soccer': 10.0, 'tennis': 7.3,
-        'badminton': 5.5, 'cricket': 5.0, 'volleyball': 4.0, 'table_tennis': 4.0,
-        'boxing': 9.0, 'kickboxing': 10.0, 'martial_arts': 10.3, 'hiit': 12.0,
-        'zumba': 6.5, 'aerobics': 7.3, 'spinning': 8.5, 'climbing': 8.0,
-        'skiing': 7.0, 'skateboarding': 5.0, 'surfing': 3.0,
-        // Strength Training
-        'bench_press': 5.0, 'squats': 6.0, 'deadlifts': 6.0, 'pullups': 8.0,
-        'pushups': 3.8, 'plank': 3.5, 'weightlifting': 5.0, 'bodyweight': 4.5,
-        'overhead_press': 5.0, 'barbell_curls': 4.5, 'lunges': 5.5,
-        'leg_press': 5.5, 'lat_pulldown': 5.0, 'cable_rows': 5.0,
+        'walking': 3.5, 'walk': 3.5, 'incline_walk': 4.5, 'jogging': 7.0,
+        'running': 9.8, 'run': 9.8, 'sprinting': 14.5,
+        'cycling': 7.5, 'bike': 6.5, 'stationary_bike': 6.5,
+        'swimming': 8.0, 'swim': 8.0, 'treadmill': 7.0,
+        'elliptical': 6.5, 'stair_climber': 8.5, 'stair': 8.5,
+        'rowing': 8.5, 'row': 5.0, 'jump_rope': 12.3,
+        'dancing': 6.0, 'dance': 6.0, 'hiking': 6.0, 'hike': 6.0,
+        'basketball': 8.0, 'soccer': 10.0, 'football': 8.0,
+        'tennis': 7.3, 'badminton': 5.5, 'volleyball': 4.0,
+        'table_tennis': 4.0, 'cricket': 5.0,
+        'boxing': 9.0, 'kickboxing': 10.0, 'martial_arts': 10.3,
+        'hiit': 12.0, 'zumba': 6.5, 'aerobics': 7.3,
+        'spinning': 8.5, 'climbing': 8.0, 'skiing': 7.0,
+        'skateboarding': 5.0, 'surfing': 3.0,
+        // Strength Training — compound
+        'bench_press': 5.0, 'bench': 5.0, 'chest_press': 4.5,
+        'incline': 5.0, 'decline': 5.0, 'flyes': 3.8, 'fly': 3.8,
+        'squats': 6.0, 'squat': 6.0, 'front_squat': 6.0, 'hack_squat': 5.5,
+        'deadlifts': 6.0, 'deadlift': 6.0, 'romanian': 5.5,
+        'pullups': 8.0, 'pull_up': 8.0, 'chin_up': 8.0, 'pull': 5.0,
+        'pushups': 3.8, 'push_up': 3.8, 'push': 3.8,
+        'plank': 3.5, 'weightlifting': 5.0, 'bodyweight': 4.5,
+        'overhead_press': 5.0, 'shoulder_press': 5.0, 'press': 5.0,
+        'barbell_curls': 4.5, 'barbell_curl': 4.5, 'curl': 4.5,
+        'lunges': 5.5, 'lunge': 5.5, 'split_squat': 5.5, 'bulgarian': 5.5,
+        'leg_press': 5.5, 'leg_curl': 4.5, 'leg_extension': 4.5,
+        'calf_raise': 3.5, 'calf': 3.5, 'hip_thrust': 5.5,
+        'lat_pulldown': 5.0, 'lat': 5.0, 'cable': 4.5,
         'dumbbell': 5.0, 'kettlebell': 6.0, 'battle_ropes': 10.3,
-        'resistance_band': 4.0, 'hammer_curls': 4.5, 'tricep': 4.5,
+        'resistance_band': 4.0, 'hammer_curls': 4.5, 'hammer': 4.5,
+        'tricep': 4.5, 'dips': 5.0, 'dip': 5.0, 'skull_crusher': 4.5,
+        'shrug': 4.0, 'shrugs': 4.0, 'upright_row': 4.5,
+        'lateral_raise': 3.8, 'front_raise': 3.8, 'rear_delt': 3.8,
+        'face_pull': 3.8, 'preacher': 4.5, 'concentration': 4.0,
+        't_bar': 5.5, 'mountain_climber': 8.0, 'crunches': 3.5,
+        'crunch': 3.5, 'sit_up': 3.5, 'russian_twist': 4.0,
+        'leg_raise': 4.0, 'ab_wheel': 5.0, 'hanging': 5.0,
         // Flexibility
-        'yoga': 3.0, 'stretching': 2.3, 'pilates': 3.7, 'tai_chi': 3.0,
-        'foam_rolling': 2.0
+        'yoga': 3.0, 'stretching': 2.3, 'stretch': 2.3,
+        'pilates': 3.7, 'tai_chi': 3.0, 'foam_rolling': 2.0, 'foam': 2.0
     };
 
-    const exerciseLower = exercise.toLowerCase().replace(/\s+/g, '_');
+    const exerciseLower = exercise.toLowerCase().replace(/[\s\-]+/g, '_');
     let met = 5.0; // Default
+    let bestLen = 0;
 
+    // Find the longest matching key (more specific match wins)
     for (const [key, value] of Object.entries(metValues)) {
-        if (exerciseLower.includes(key) || key.includes(exerciseLower)) {
-            met = value; break;
+        if (exerciseLower.includes(key) && key.length > bestLen) {
+            met = value;
+            bestLen = key.length;
+        } else if (key.includes(exerciseLower) && exerciseLower.length > bestLen) {
+            met = value;
+            bestLen = exerciseLower.length;
         }
     }
+
+    // Intensity multiplier
+    if (intensity === 'low') met *= 0.8;
+    else if (intensity === 'high') met *= 1.2;
 
     const weightKg = weight * 0.453592;
     const timeHours = duration / 60;

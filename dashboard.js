@@ -526,9 +526,12 @@ function updateFitnessScore(cal, pro, burned, water, streak, wMin) {
 function loadRecentActivity() {
     const meals = loadUserData('meals').slice(-5).reverse();
     const workouts = loadUserData('workouts').slice(-5).reverse();
-    const combined = [...meals.map(m => ({ type: 'meal', text: `🍽️ ${m.foodName} (${Math.round(m.calories * m.quantity)} cal)`, time: m.timestamp })),
-                      ...workouts.map(w => ({ type: 'workout', text: `🏋️ ${w.exercise} (${w.caloriesBurned} cal burned)`, time: w.timestamp }))]
-                     .sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 8);
+    const waterLog = loadUserData('water').slice(-3).reverse();
+    const combined = [
+        ...meals.map(m => ({ type: 'meal', text: '🍽️ ' + m.foodName + ' (' + Math.round(m.calories * m.quantity) + ' cal)', time: m.timestamp })),
+        ...workouts.map(w => ({ type: 'workout', text: '🏋️ ' + w.exercise + ' — ' + (w.duration || 0) + 'min (' + (w.caloriesBurned || 0) + ' cal burned)', time: w.timestamp })),
+        ...waterLog.map(w => ({ type: 'water', text: '💧 ' + w.amount + ' ml water', time: w.timestamp }))
+    ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 10);
 
     const el = document.getElementById('recentActivity');
     if (combined.length === 0) { el.innerHTML = '<p class="empty-message">No recent activity. Start tracking!</p>'; return; }
