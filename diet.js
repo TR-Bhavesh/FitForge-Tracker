@@ -337,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const timeInput = document.getElementById('mealTime');
         if (timeInput) timeInput.value = now.toTimeString().slice(0, 5);
         const dateInput = document.getElementById('dietDate');
-        if (dateInput) dateInput.value = getTodayDate();
+        if (dateInput) dateInput.value = getSelectedDate();
 
         renderDateStrip();
         loadTodaysMeals();
@@ -538,15 +538,24 @@ function saveEditedMeal() {
     showNotification('Meal updated!');
 }
 
-function loadDietForDate() { loadTodaysMeals(); renderDateStrip(); }
+function loadDietForDate() {
+    const dateInput = document.getElementById('dietDate');
+    if (dateInput) setSelectedDate(dateInput.value);
+    loadTodaysMeals();
+    loadWaterIntake();
+    renderDateStrip();
+}
 
 // Navigate date forward/back
 function changeDate(offset) {
     const dateInput = document.getElementById('dietDate');
     const current = new Date(dateInput.value || getTodayDate());
     current.setDate(current.getDate() + offset);
-    dateInput.value = current.toISOString().split('T')[0];
+    const newDate = current.toISOString().split('T')[0];
+    dateInput.value = newDate;
+    setSelectedDate(newDate);
     loadTodaysMeals();
+    loadWaterIntake();
     renderDateStrip();
 }
 
@@ -629,13 +638,16 @@ function renderDateStrip() {
 function selectStripDate(dateStr) {
     const dateInput = document.getElementById('dietDate');
     if (dateInput) dateInput.value = dateStr;
+    setSelectedDate(dateStr);
     loadTodaysMeals();
+    loadWaterIntake();
     renderDateStrip();
 }
 
 // ── Water tracking ──
 function addWater(amount) {
-    const waterEntry = { id: Date.now(), date: getTodayDate(), amount, timestamp: new Date().toISOString() };
+    const date = document.getElementById('dietDate')?.value || getTodayDate();
+    const waterEntry = { id: Date.now(), date: date, amount, timestamp: new Date().toISOString() };
     const data = loadUserData('water');
     data.push(waterEntry);
     saveUserData('water', data);
@@ -644,10 +656,11 @@ function addWater(amount) {
 }
 
 function loadWaterIntake() {
-    const waterData = getDataForDate('water', getTodayDate());
+    const date = document.getElementById('dietDate')?.value || getTodayDate();
+    const waterData = getDataForDate('water', date);
     let total = 0;
     waterData.forEach(e => { total += e.amount; });
-    const pct = Math.min((total / 4000) * 100, 100);
+    const pct = Math.min((total / 3000) * 100, 100);
     document.getElementById('waterTotal').textContent = total + ' ml';
     document.getElementById('waterFill').style.width = pct + '%';
 }

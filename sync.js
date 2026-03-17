@@ -6,6 +6,7 @@
 
 const SYNC_KEY = 'fitforge_sync_config';
 let _syncDebounce = null;
+let _syncInProgress = false;  // guard against infinite loop
 
 // ── Crypto (AES-256-GCM + PBKDF2) ────────────────────
 async function deriveKey(passphrase, salt) {
@@ -55,10 +56,26 @@ async function blobCreate(data) {
         body: JSON.stringify(data)
     });
     if (!res.ok) throw new Error('Cloud create failed: ' + res.status);
-    const loc = res.headers.get('Location') || res.headers.get('location');
-    if (loc) return loc.split('/').pop();
-    const json = await res.json();
-    return json.id || null;
+    // Try Location header first (jsonblob returns URL in it)
+    const loc = res.headers.get('Location') || res.headers.get('location') || '';
+    if (loc) {
+        const id = loc.split('/').pop();
+        if (id) return id;
+    }
+    // Fallback: check X-jsonblob header
+    const xjb = res.headers.get('X-jsonblob') || '';
+    if (xjb) return xjb;
+    // Fallback: try to extract from response URL
+    if (res.url && res.url.includes('/api/jsonBlob/')) {
+        const id = res.url.split('/api/jsonBlob/').pop();
+        if (id) return id;
+    }
+    // Last resort: try response body for an id field
+    try {
+        const json = await res.json();
+        if (json && json.id) return json.id;
+    } catch (e) { /* ignore */ }
+    return null;
 }
 
 async function blobRead(id) {
@@ -126,6 +143,8 @@ function restoreAllData(data) {
 async function syncPush(silent) {
     const cfg = getSyncConfig();
     if (!cfg || !cfg.blobId || !cfg.passphrase) return;
+    if (_syncInProgress) return;  // prevent re-entrant sync
+    _syncInProgress = true;
 
     const statusEl = document.getElementById('syncStatus');
     if (!silent && statusEl) { statusEl.style.display = 'block'; statusEl.textContent = '⏳ Syncing…'; statusEl.className = 'sync-status syncing'; }
@@ -153,6 +172,8 @@ async function syncPush(silent) {
     } catch (err) {
         if (!silent && statusEl) { statusEl.textContent = '❌ ' + err.message; statusEl.className = 'sync-status error'; }
         if (!silent) showNotification('Sync failed: ' + err.message, 'error');
+    } finally {
+        _syncInProgress = false;
     }
 }
 
@@ -160,6 +181,8 @@ async function syncPush(silent) {
 async function syncPull(silent) {
     const cfg = getSyncConfig();
     if (!cfg || !cfg.blobId || !cfg.passphrase) return;
+    if (_syncInProgress) return;  // prevent re-entrant sync
+    _syncInProgress = true;
 
     const statusEl = document.getElementById('syncStatus');
     if (!silent && statusEl) { statusEl.style.display = 'block'; statusEl.textContent = '⏳ Pulling…'; statusEl.className = 'sync-status syncing'; }
@@ -179,12 +202,34 @@ async function syncPull(silent) {
         if (!silent) {
             showNotification('Data pulled! Refreshing…', 'success');
             setTimeout(() => location.reload(), 1000);
+        } else {
+            // Silent pull: refresh page data without full reload
+            refreshPageData();
         }
         updateSyncUI();
     } catch (err) {
         if (!silent && statusEl) { statusEl.textContent = '❌ ' + err.message; statusEl.className = 'sync-status error'; }
         if (!silent) showNotification('Pull failed: ' + err.message, 'error');
+    } finally {
+        _syncInProgress = false;
     }
+}
+
+// Refresh current page data after a silent sync pull
+function refreshPageData() {
+    try {
+        const path = window.location.pathname + window.location.href;
+        if (path.includes('dashboard')) {
+            if (typeof loadDashboardData === 'function') loadDashboardData();
+        } else if (path.includes('diet')) {
+            if (typeof loadTodaysMeals === 'function') loadTodaysMeals();
+            if (typeof loadWaterIntake === 'function') loadWaterIntake();
+        } else if (path.includes('workout')) {
+            if (typeof loadTodaysWorkout === 'function') loadTodaysWorkout();
+        } else if (path.includes('analytics')) {
+            if (typeof loadAnalytics === 'function') loadAnalytics();
+        }
+    } catch (e) { /* safe to ignore */ }
 }
 
 // ── SETUP: Enable cloud sync (creates blob) ──────────
@@ -247,6 +292,7 @@ async function joinCloudSync() {
 
 // ── AUTO-SYNC: debounced push on any data change ──────
 function triggerAutoSync() {
+    if (_syncInProgress) return;  // don't re-trigger during sync operations
     const cfg = getSyncConfig();
     if (!cfg || !cfg.blobId) return;
     clearTimeout(_syncDebounce);

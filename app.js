@@ -44,6 +44,14 @@ function getTodayDate() {
     return new Date().toISOString().split('T')[0];
 }
 
+// Get/set the selected date across pages (persists on navigation)
+function getSelectedDate() {
+    return sessionStorage.getItem('fitforge_selected_date') || getTodayDate();
+}
+function setSelectedDate(dateStr) {
+    sessionStorage.setItem('fitforge_selected_date', dateStr);
+}
+
 // Format date for display
 function formatDate(dateString) {
     const date = new Date(dateString);

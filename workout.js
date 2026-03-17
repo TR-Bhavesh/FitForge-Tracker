@@ -333,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateUserDisplay();
         loadTodaysWorkout();
         loadActivityData();
-        document.getElementById('workoutDate').value = getTodayDate();
+        document.getElementById('workoutDate').value = getSelectedDate();
         restoreSession();
     }
 });
@@ -846,7 +846,11 @@ function deleteWorkout(workoutId) {
     showNotification('Workout deleted');
 }
 
-function loadWorkoutForDate() { loadTodaysWorkout(); }
+function loadWorkoutForDate() {
+    const dateInput = document.getElementById('workoutDate');
+    if (dateInput) setSelectedDate(dateInput.value);
+    loadTodaysWorkout();
+}
 
 // ═══════════════════════════════════════════════
 // TEMPLATES — now starts a live session
